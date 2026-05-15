@@ -8,8 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
-builder.Services.AddSingleton<IOrderRepository, InMemoryOrderRepository>();
-builder.Services.AddSingleton<IOrderApplicationService, OrderApplicationService>();
+builder.Services.AddScoped<IOrderRepository, EfCoreOrderRepository>();
+builder.Services.AddScoped<IOrderApplicationService, OrderApplicationService>();
 builder.Services.AddDbContext<OrderingDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("OrderingDb"));

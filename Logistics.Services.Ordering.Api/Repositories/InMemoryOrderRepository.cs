@@ -27,5 +27,10 @@ namespace Logistics.Services.Ordering.Api.Repositories
 
             return Task.FromResult(order);
         }
+
+        public Task SaveChangesAsync()
+        {
+            return Task.CompletedTask;
+        }
     }
 }

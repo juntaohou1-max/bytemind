@@ -22,6 +22,8 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 
             order.Cancel();
 
+            await _orderRepository.SaveChangesAsync();
+
             return true;
         }
 
@@ -30,6 +32,7 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             var order = OrderContractMapper.ToOrder(request);
 
             await _orderRepository.AddAsync(order);
+            await _orderRepository.SaveChangesAsync();
 
             return new CreateOrderResponse
             {
@@ -110,6 +113,8 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 
             order.MarkFulfillmentCreated();
 
+            await _orderRepository.SaveChangesAsync();
+
             return true;
         }
 
@@ -121,6 +126,8 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
                 return false;
 
             order.MarkInventoryReserved();
+
+            await _orderRepository.SaveChangesAsync();
 
             return true;
         }

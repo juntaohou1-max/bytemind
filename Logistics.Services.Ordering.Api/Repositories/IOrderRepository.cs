@@ -24,6 +24,9 @@ namespace Logistics.Services.Ordering.Api.Repositories
         /// <returns>订单集合。</returns>
         Task<IReadOnlyCollection<Order>> GetAllAsync();
 
-
+        /// <summary>
+        /// 保存已跟踪实体的变更。
+        /// </summary>
+        Task SaveChangesAsync();
     }
 }
