@@ -1,0 +1,71 @@
+﻿using Logistics.Services.Ordering.Api.Domain;
+
+namespace Logistics.Services.Ordering.Api.Contracts.Orders
+{
+    public static class OrderContractMapper
+    {
+        public static Order ToOrder(CreateOrderRequest request) 
+        {
+
+            var address = new Address(
+                request.ReceiverAddress!.ReceiverName!,
+                request.ReceiverAddress.Phone!,
+                request.ReceiverAddress.Province!,
+                request.ReceiverAddress.City!,
+                request.ReceiverAddress.District!,
+                request.ReceiverAddress.Detail!);
+
+            var lines = request.Lines!
+                .Select(line => new OrderLine(line.SkuId!, line.Quantity))
+                .ToList();
+
+            return new Order(
+                request.TenantId!,
+                request.CustomerId!,
+                request.ExternalOrderNo!,
+                address,
+                lines);
+        }
+
+        public static OrderDetailResponse ToDetailResponse(Order order)
+        {
+            return new OrderDetailResponse
+            {
+                Id = order.Id,
+                TenantId = order.TenantId,
+                CustomerId = order.CustomerId,
+                ExternalOrderNo = order.ExternalOrderNo,
+                ReceiverAddress = new AddressResponse
+                {
+                    ReceiverName = order.ReceiverAddress.ReceiverName,
+                    Phone = order.ReceiverAddress.Phone,
+                    Province = order.ReceiverAddress.Province,
+                    City = order.ReceiverAddress.City,
+                    District = order.ReceiverAddress.District,
+                    Detail = order.ReceiverAddress.Detail
+                },
+                Lines = order.Lines
+                    .Select(line => new OrderLineResponse
+                    {
+                        SkuId = line.SkuId,
+                        Quantity = line.Quantity
+                    })
+                    .ToList(),
+                Status = order.Status.ToString(),
+                CreatedAt = order.CreatedAt
+            };
+        }
+
+        public static IReadOnlyCollection<OrderTimelineItemResponse> ToTimelineResponse(Order order)
+        {
+            return order.TimelineItems
+                .Select(item => new OrderTimelineItemResponse
+                {
+                    EventType = item.EventType,
+                    Description = item.Description,
+                    OccurredAt = item.OccurredAt
+                })
+                .ToList();
+        }
+    }
+}

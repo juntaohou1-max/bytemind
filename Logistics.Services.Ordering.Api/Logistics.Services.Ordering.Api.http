@@ -1,0 +1,76 @@
+@Logistics.Services.Ordering.Api_HostAddress = http://localhost:5299
+
+###
+
+POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders
+Content-Type: application/json
+
+{
+  "tenantId": "tenant-001",
+  "customerId": "customer-001",
+  "externalOrderNo": "ERP202605120001",
+  "receiverAddress": {
+    "receiverName": "张三",
+    "phone": "13800000000",
+    "province": "浙江省",
+    "city": "杭州市",
+    "district": "西湖区",
+    "detail": "文三路 100 号"
+  },
+  "lines": [
+    {
+      "skuId": "SKU-001",
+      "quantity": 2
+    }
+  ]
+}
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/
+Accept: application/json
+
+###
+
+POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/91a25045-3fa4-44ea-927c-ee495de4e260/cancel
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/8d330a85-fbd1-421a-91fb-a050c84e8c78
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/91a25045-3fa4-44ea-927c-ee495de4e260/timeline
+Accept: application/json
+
+###
+
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?status=Created
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?status=Cancelled
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?status=Caqqncelled
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?from=2026-05-14T00:00:00Z
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?status=Created&from=2026-05-14T00:00:00Z
+Accept: application/json
+
+###
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?from=2026-05-15T00:00:00Z&to=2026-05-14T00:00:00Z
+Accept: application/json
