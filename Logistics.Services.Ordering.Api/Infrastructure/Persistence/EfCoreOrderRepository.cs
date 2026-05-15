@@ -66,5 +66,14 @@ namespace Logistics.Services.Ordering.Api.Infrastructure.Persistence
         {
             await _dbContext.SaveChangesAsync();
         }
+
+        public async Task<Order?> GetByTenantAndExternalOrderNoAsync(string tenantId, string externalOrderNo)
+        {
+            return await _dbContext.Orders
+                .FirstOrDefaultAsync(s =>
+                    s.TenantId == tenantId &&
+                    s.ExternalOrderNo == externalOrderNo);
+
+        }
     }
 }

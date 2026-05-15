@@ -24,6 +24,13 @@ namespace Logistics.Services.Ordering.Api.Infrastructure.Persistence
                 // Order.Id 是 Orders 表的主键
                 builder.HasKey(order => order.Id);
 
+                builder.HasIndex(order => new
+                {
+                    order.TenantId,
+                    order.ExternalOrderNo,
+
+                }).IsUnique();
+
                 builder.Property(order => order.TenantId)
                     .IsRequired()
                     .HasMaxLength(64);

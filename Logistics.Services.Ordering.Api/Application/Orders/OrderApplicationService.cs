@@ -29,6 +29,16 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 
         public async Task<CreateOrderResponse> CreateAsync(CreateOrderRequest request)
         {
+            var existingOrder = await _orderRepository.GetByTenantAndExternalOrderNoAsync(
+                request.TenantId!,
+                request.ExternalOrderNo!);
+
+            if (existingOrder is not null)
+                return new CreateOrderResponse
+                {
+                    Id = existingOrder.Id
+                };
+
             var order = OrderContractMapper.ToOrder(request);
 
             await _orderRepository.AddAsync(order);

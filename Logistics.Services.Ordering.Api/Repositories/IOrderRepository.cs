@@ -29,5 +29,8 @@ namespace Logistics.Services.Ordering.Api.Repositories
         /// 保存已跟踪实体的变更。
         /// </summary>
         Task SaveChangesAsync();
+
+        Task<Order?> GetByTenantAndExternalOrderNoAsync(string tenantId, string externalOrderNo);
+
     }
 }

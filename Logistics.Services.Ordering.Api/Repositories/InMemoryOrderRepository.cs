@@ -58,5 +58,14 @@ namespace Logistics.Services.Ordering.Api.Repositories
         {
             return Task.CompletedTask;
         }
+
+        public Task<Order?> GetByTenantAndExternalOrderNoAsync(string tenantId, string externalOrderNo)
+        {
+            var order = _orders.Values.FirstOrDefault(order =>
+                order.TenantId == tenantId &&
+                order.ExternalOrderNo == externalOrderNo);
+
+            return Task.FromResult(order);
+        }
     }
 }
