@@ -78,12 +78,12 @@ Accept: application/json
 
 ###
 
-POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/91a25045-3fa4-44ea-927c-ee495de4e260/reserve-inventory
+POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/91a25045-3fa4-44ea-927c-ee495de4e260/mark-inventory-reserved
 Accept: application/json
 
 ###
 
-POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/91a25045-3fa4-44ea-927c-ee495de4e260/fulfillment-created
+POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/91a25045-3fa4-44ea-927c-ee495de4e260/mark-fulfillment-created
 Accept: application/json
 
 ###

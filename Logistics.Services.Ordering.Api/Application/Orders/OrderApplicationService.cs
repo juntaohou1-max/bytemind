@@ -37,7 +37,7 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             };
         }
 
-        public IReadOnlyCollection<OrderDetailResponse> GetAll(
+        public IReadOnlyCollection<OrderListItemResponse> GetAll(
             string? status,
             DateTimeOffset? from,
             DateTimeOffset? to,
@@ -77,7 +77,7 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             }
 
             return orders
-                .Select(OrderContractMapper.ToDetailResponse)
+                .Select(OrderContractMapper.ToListItemResponse)
                 .ToList();
         }
 

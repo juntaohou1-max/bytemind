@@ -105,6 +105,20 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
         }
 
         [Fact]
+        public void GetAll_ShouldReturnListItemResponse()
+        {
+            var repository = new InMemoryOrderRepository();
+            repository.Add(CreateOrder("ERP001"));
+            var service = new OrderApplicationService(repository);
+
+            var response = service.GetAll(null, null, null, null);
+
+            var order = Assert.Single(response);
+            Assert.Equal("ERP001", order.ExternalOrderNo);
+            Assert.Equal(1, order.LineCount);
+        }
+
+        [Fact]
         public void GetAll_ShouldThrowException_WhenStatusIsInvalid()
         {
             var service = new OrderApplicationService(new InMemoryOrderRepository());

@@ -56,6 +56,20 @@ namespace Logistics.Services.Ordering.Api.Contracts.Orders
             };
         }
 
+        public static OrderListItemResponse ToListItemResponse(Order order)
+        {
+            return new OrderListItemResponse
+            {
+                Id = order.Id,
+                TenantId = order.TenantId,
+                CustomerId = order.CustomerId,
+                ExternalOrderNo = order.ExternalOrderNo,
+                Status = order.Status.ToString(),
+                CreatedAt = order.CreatedAt,
+                LineCount = order.Lines.Count
+            };
+        }
+
         public static IReadOnlyCollection<OrderTimelineItemResponse> ToTimelineResponse(Order order)
         {
             return order.TimelineItems

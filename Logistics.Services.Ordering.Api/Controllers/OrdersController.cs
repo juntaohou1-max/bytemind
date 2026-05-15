@@ -106,7 +106,7 @@ namespace Logistics.Services.Ordering.Api.Controllers
             return Ok(response);
         }
 
-        [HttpPost("{id:guid}/reserve-inventory")]
+        [HttpPost("{id:guid}/mark-inventory-reserved")]
         public IActionResult MarkInventoryReserved(Guid id)
         {
             try
@@ -126,7 +126,7 @@ namespace Logistics.Services.Ordering.Api.Controllers
             }
         }
 
-        [HttpPost("{id:guid}/fulfillment-created")]
+        [HttpPost("{id:guid}/mark-fulfillment-created")]
         public IActionResult MarkFulfillmentCreated(Guid id)
         {
             try

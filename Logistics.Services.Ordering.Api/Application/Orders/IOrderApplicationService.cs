@@ -8,7 +8,7 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 
         OrderDetailResponse? GetById(Guid id);
 
-        IReadOnlyCollection<OrderDetailResponse> GetAll(
+        IReadOnlyCollection<OrderListItemResponse> GetAll(
             string? status,
             DateTimeOffset? from,
             DateTimeOffset? to,
