@@ -1,5 +1,7 @@
 using Logistics.Services.Ordering.Api.Application.Orders;
+using Logistics.Services.Ordering.Api.Infrastructure.Persistence;
 using Logistics.Services.Ordering.Api.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +10,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddSingleton<IOrderRepository, InMemoryOrderRepository>();
 builder.Services.AddSingleton<IOrderApplicationService, OrderApplicationService>();
+builder.Services.AddDbContext<OrderingDbContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("OrderingDb"));
+});
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
