@@ -19,10 +19,11 @@ namespace Logistics.Services.Ordering.Api.Repositories
         Task<Order?> GetByIdAsync(Guid id);
 
         /// <summary>
-        /// 查询所有订单。
+        /// 按条件查询订单。
         /// </summary>
+        /// <param name="query">订单查询条件。</param>
         /// <returns>订单集合。</returns>
-        Task<IReadOnlyCollection<Order>> GetAllAsync();
+        Task<IReadOnlyCollection<Order>> SearchAsync(OrderQuery query);
 
         /// <summary>
         /// 保存已跟踪实体的变更。

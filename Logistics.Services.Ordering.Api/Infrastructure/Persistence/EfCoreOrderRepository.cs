@@ -18,9 +18,37 @@ namespace Logistics.Services.Ordering.Api.Infrastructure.Persistence
             await _dbContext.Orders.AddAsync(order);
         }
 
-        public async Task<IReadOnlyCollection<Order>> GetAllAsync()
+        public async Task<IReadOnlyCollection<Order>> SearchAsync(OrderQuery orderQuery)
         {
-            return await _dbContext.Orders
+            ArgumentNullException.ThrowIfNull(orderQuery);
+
+            var query = _dbContext.Orders
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (orderQuery.Status.HasValue)
+            {
+                query = query.Where(order => order.Status == orderQuery.Status.Value);
+            }
+
+            if (orderQuery.From.HasValue)
+            {
+                query = query.Where(order => order.CreatedAt >= orderQuery.From.Value);
+            }
+
+            if (orderQuery.To.HasValue)
+            {
+                query = query.Where(order => order.CreatedAt <= orderQuery.To.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(orderQuery.ExternalOrderNo))
+            {
+                var externalOrderNo = orderQuery.ExternalOrderNo.Trim();
+
+                query = query.Where(order => order.ExternalOrderNo == externalOrderNo);
+            }
+
+            return await query
                 .Include(order => order.Lines)
                 .ToListAsync();
         }

@@ -14,11 +14,35 @@ namespace Logistics.Services.Ordering.Api.Repositories
             return Task.CompletedTask;
         }
 
-        public Task<IReadOnlyCollection<Order>> GetAllAsync()
+        public Task<IReadOnlyCollection<Order>> SearchAsync(OrderQuery query)
         {
-            IReadOnlyCollection<Order> orders = _orders.Values.ToList();
+            ArgumentNullException.ThrowIfNull(query);
 
-            return Task.FromResult(orders);
+            IEnumerable<Order> orders = _orders.Values;
+
+            if (query.Status.HasValue)
+            {
+                orders = orders.Where(order => order.Status == query.Status.Value);
+            }
+
+            if (query.From.HasValue)
+            {
+                orders = orders.Where(order => order.CreatedAt >= query.From.Value);
+            }
+
+            if (query.To.HasValue)
+            {
+                orders = orders.Where(order => order.CreatedAt <= query.To.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.ExternalOrderNo))
+            {
+                var externalOrderNo = query.ExternalOrderNo.Trim();
+
+                orders = orders.Where(order => order.ExternalOrderNo == externalOrderNo);
+            }
+
+            return Task.FromResult<IReadOnlyCollection<Order>>(orders.ToList());
         }
 
         public Task<Order?> GetByIdAsync(Guid id)

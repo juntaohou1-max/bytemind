@@ -46,38 +46,23 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             DateTimeOffset? to,
             string? externalOrderNo)
         {
-            var orders = await _orderRepository.GetAllAsync();
+            OrderStatus? orderStatus = null;
 
             if (!string.IsNullOrWhiteSpace(status))
             {
-                if (!Enum.TryParse<OrderStatus>(status, ignoreCase: true, out var orderStatus))
+                if (!Enum.TryParse<OrderStatus>(status, ignoreCase: true, out var parsedStatus))
                     throw new ArgumentException("订单状态不正确。", nameof(status));
 
-                orders = orders
-                    .Where(order => order.Status == orderStatus)
-                    .ToList();
+                orderStatus = parsedStatus;
             }
 
-            if (from.HasValue)
+            var orders = await _orderRepository.SearchAsync(new OrderQuery
             {
-                orders = orders
-                    .Where(order => order.CreatedAt >= from.Value)
-                    .ToList();
-            }
-
-            if (to.HasValue)
-            {
-                orders = orders
-                    .Where(order => order.CreatedAt <= to.Value)
-                    .ToList();
-            }
-
-            if (!string.IsNullOrWhiteSpace(externalOrderNo))
-            {
-                orders = orders
-                    .Where(order => order.ExternalOrderNo == externalOrderNo)
-                    .ToList();
-            }
+                Status = orderStatus,
+                From = from,
+                To = to,
+                ExternalOrderNo = externalOrderNo
+            });
 
             return orders
                 .Select(OrderContractMapper.ToListItemResponse)
