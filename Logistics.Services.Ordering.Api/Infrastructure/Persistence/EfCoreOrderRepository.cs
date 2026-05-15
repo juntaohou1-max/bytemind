@@ -18,7 +18,7 @@ namespace Logistics.Services.Ordering.Api.Infrastructure.Persistence
             await _dbContext.Orders.AddAsync(order);
         }
 
-        public async Task<IReadOnlyCollection<Order>> SearchAsync(OrderQuery orderQuery)
+        public async Task<PagedResult<Order>> SearchAsync(OrderQuery orderQuery)
         {
             //如果 orderQuery 是 null，就立刻抛出 ArgumentNullException。
             ArgumentNullException.ThrowIfNull(orderQuery);
@@ -49,9 +49,23 @@ namespace Logistics.Services.Ordering.Api.Infrastructure.Persistence
                 query = query.Where(order => order.ExternalOrderNo == externalOrderNo);
             }
 
-            return await query
+            var totalCount = await query.CountAsync();
+
+            query = orderQuery.Sort.Equals("createdAtAsc", StringComparison.OrdinalIgnoreCase)
+                ? query.OrderBy(order => order.CreatedAt)
+                : query.OrderByDescending(order => order.CreatedAt);
+
+            var orders = await query
+                .Skip((orderQuery.PageNumber - 1) * orderQuery.PageSize)
+                .Take(orderQuery.PageSize)
                 .Include(order => order.Lines)
                 .ToListAsync();
+
+            return new PagedResult<Order>
+            {
+                Items = orders,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<Order?> GetByIdAsync(Guid id)

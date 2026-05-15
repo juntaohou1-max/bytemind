@@ -40,8 +40,18 @@ namespace Logistics.Services.Ordering.Api.Controllers
             }
         }
 
+        /// <summary>
+        /// 按条件分页查询订单列表。
+        /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetAll(string? status, DateTimeOffset? from, DateTimeOffset? to, string? externalOrderNo)
+        public async Task<IActionResult> GetAll(
+            string? status,
+            DateTimeOffset? from,
+            DateTimeOffset? to,
+            string? externalOrderNo,
+            int pageNumber = 1,
+            int pageSize = 20,
+            string sort = "createdAtDesc")
         {
             if (from.HasValue && to.HasValue && from.Value > to.Value)
             {
@@ -50,7 +60,14 @@ namespace Logistics.Services.Ordering.Api.Controllers
 
             try
             {
-                var response = await _orderApplicationService.GetAllAsync(status, from, to, externalOrderNo);
+                var response = await _orderApplicationService.GetAllAsync(
+                    status,
+                    from,
+                    to,
+                    externalOrderNo,
+                    pageNumber,
+                    pageSize,
+                    sort);
 
                 return Ok(response);
             }

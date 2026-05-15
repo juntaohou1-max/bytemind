@@ -50,11 +50,14 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             };
         }
 
-        public async Task<IReadOnlyCollection<OrderListItemResponse>> GetAllAsync(
+        public async Task<PagedResponse<OrderListItemResponse>> GetAllAsync(
             string? status,
             DateTimeOffset? from,
             DateTimeOffset? to,
-            string? externalOrderNo)
+            string? externalOrderNo,
+            int pageNumber,
+            int pageSize,
+            string sort = "createdAtDesc")
         {
             OrderStatus? orderStatus = null;
 
@@ -66,17 +69,41 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
                 orderStatus = parsedStatus;
             }
 
+            if (pageNumber < 1)
+                throw new ArgumentException("页码必须大于等于 1。", nameof(pageNumber));
+
+            if (pageSize < 1)
+                throw new ArgumentException("每页数量必须大于等于 1。", nameof(pageSize));
+
+            if (pageSize > 100)
+                throw new ArgumentException("每页数量不能超过 100。", nameof(pageSize));
+
+            if (!string.Equals(sort, "createdAtDesc", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(sort, "createdAtAsc", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("排序字段不正确。", nameof(sort));
+            }
+
             var orders = await _orderRepository.SearchAsync(new OrderQuery
             {
                 Status = orderStatus,
                 From = from,
                 To = to,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                Sort = sort,
                 ExternalOrderNo = externalOrderNo
             });
 
-            return orders
+            var items = orders.Items
                 .Select(OrderContractMapper.ToListItemResponse)
                 .ToList();
+
+            return OrderContractMapper.ToPagedResponse(
+                items,
+                pageNumber,
+                pageSize,
+                orders.TotalCount);
         }
 
         public async Task<OrderDetailResponse?> GetByIdAsync(Guid id)

@@ -81,11 +81,12 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             await repository.AddAsync(cancelledOrder);
             var service = new OrderApplicationService(repository);
 
-            var response = await service.GetAllAsync("Cancelled", null, null, null);
+            var response = await service.GetAllAsync("Cancelled", null, null, null, 1, 20, "createdAtDesc");
 
-            var order = Assert.Single(response);
+            var order = Assert.Single(response.Items);
             Assert.Equal(cancelledOrder.Id, order.Id);
             Assert.Equal("Cancelled", order.Status);
+            Assert.Equal(1, response.TotalCount);
         }
 
         [Fact]
@@ -97,11 +98,12 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             await repository.AddAsync(CreateOrder("ERP002"));
             var service = new OrderApplicationService(repository);
 
-            var response = await service.GetAllAsync(null, null, null, "ERP001");
+            var response = await service.GetAllAsync(null, null, null, "ERP001", 1, 20, "createdAtDesc");
 
-            var order = Assert.Single(response);
+            var order = Assert.Single(response.Items);
             Assert.Equal(targetOrder.Id, order.Id);
             Assert.Equal("ERP001", order.ExternalOrderNo);
+            Assert.Equal(1, response.TotalCount);
         }
 
         [Fact]
@@ -111,11 +113,14 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             await repository.AddAsync(CreateOrder("ERP001"));
             var service = new OrderApplicationService(repository);
 
-            var response = await service.GetAllAsync(null, null, null, null);
+            var response = await service.GetAllAsync(null, null, null, null, 1, 20, "createdAtDesc");
 
-            var order = Assert.Single(response);
+            var order = Assert.Single(response.Items);
             Assert.Equal("ERP001", order.ExternalOrderNo);
             Assert.Equal(1, order.LineCount);
+            Assert.Equal(1, response.PageNumber);
+            Assert.Equal(20, response.PageSize);
+            Assert.Equal(1, response.TotalCount);
         }
 
         [Fact]
@@ -124,9 +129,33 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             var service = new OrderApplicationService(new InMemoryOrderRepository());
 
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
-                service.GetAllAsync("Unknown", null, null, null));
+                service.GetAllAsync("Unknown", null, null, null, 1, 20, "createdAtDesc"));
 
             Assert.Equal("status", exception.ParamName);
+        }
+
+        [Fact]
+        public async Task GetAll_ShouldReturnRequestedPageAndTotalCount()
+        {
+            var repository = new InMemoryOrderRepository();
+            var firstOrder = CreateOrder("ERP001");
+            await Task.Delay(5);
+            var secondOrder = CreateOrder("ERP002");
+            await Task.Delay(5);
+            var thirdOrder = CreateOrder("ERP003");
+            await repository.AddAsync(firstOrder);
+            await repository.AddAsync(secondOrder);
+            await repository.AddAsync(thirdOrder);
+            var service = new OrderApplicationService(repository);
+
+            var response = await service.GetAllAsync(null, null, null, null, 2, 1, "createdAtAsc");
+
+            var order = Assert.Single(response.Items);
+            Assert.Equal("ERP002", order.ExternalOrderNo);
+            Assert.Equal(2, response.PageNumber);
+            Assert.Equal(1, response.PageSize);
+            Assert.Equal(3, response.TotalCount);
+            Assert.Equal(3, response.TotalPages);
         }
 
         private static Order CreateOrder(string externalOrderNo)

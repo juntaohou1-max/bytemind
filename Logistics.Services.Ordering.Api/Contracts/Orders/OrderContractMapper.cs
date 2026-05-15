@@ -81,5 +81,29 @@ namespace Logistics.Services.Ordering.Api.Contracts.Orders
                 })
                 .ToList();
         }
+
+        /// <summary>
+        /// 将当前页数据和分页元数据组装成统一分页响应。
+        /// </summary>
+        /// <typeparam name="T">当前页中单条数据的响应类型。</typeparam>
+        /// <param name="items">当前页数据。</param>
+        /// <param name="pageNumber">页码，从 1 开始。</param>
+        /// <param name="pageSize">每页数据条数。</param>
+        /// <param name="totalCount">符合查询条件的总条数。</param>
+        /// <returns>分页响应。</returns>
+        public static PagedResponse<T> ToPagedResponse<T>(
+            IReadOnlyCollection<T> items,
+            int pageNumber,
+            int pageSize,
+            int totalCount)
+        {
+            return new PagedResponse<T>
+            {
+                Items = items,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
+        }
     }
 }

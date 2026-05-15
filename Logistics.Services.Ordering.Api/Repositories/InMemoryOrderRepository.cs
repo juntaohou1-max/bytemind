@@ -16,7 +16,7 @@ namespace Logistics.Services.Ordering.Api.Repositories
             return Task.CompletedTask;
         }
 
-        public Task<IReadOnlyCollection<Order>> SearchAsync(OrderQuery query)
+        public Task<PagedResult<Order>> SearchAsync(OrderQuery query)
         {
             ArgumentNullException.ThrowIfNull(query);
 
@@ -44,7 +44,22 @@ namespace Logistics.Services.Ordering.Api.Repositories
                 orders = orders.Where(order => order.ExternalOrderNo == externalOrderNo);
             }
 
-            return Task.FromResult<IReadOnlyCollection<Order>>(orders.ToList());
+            var totalCount = orders.Count();
+
+            orders = query.Sort.Equals("createdAtAsc", StringComparison.OrdinalIgnoreCase)
+                ? orders.OrderBy(order => order.CreatedAt)
+                : orders.OrderByDescending(order => order.CreatedAt);
+
+            var items = orders
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .ToList();
+
+            return Task.FromResult(new PagedResult<Order>
+            {
+                Items = items,
+                TotalCount = totalCount
+            });
         }
 
         public Task<Order?> GetByIdAsync(Guid id)
