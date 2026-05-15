@@ -93,6 +93,33 @@ namespace Logistics.Services.Ordering.Api.Infrastructure.Persistence
 
                 builder.Navigation(order => order.Lines)
                     .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+                builder.OwnsMany(order => order.TimelineItems, timeline =>
+                {
+                    timeline.ToTable("OrderTimelineItems");
+
+                    timeline.WithOwner()
+                        .HasForeignKey("OrderId");
+
+                    timeline.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    timeline.HasKey("Id");
+
+                    timeline.Property(item => item.EventType)
+                        .IsRequired()
+                        .HasMaxLength(64);
+
+                    timeline.Property(item => item.Description)
+                        .IsRequired()
+                        .HasMaxLength(256);
+
+                    timeline.Property(item => item.OccurredAt)
+                        .IsRequired();
+                });
+
+                builder.Navigation(order => order.TimelineItems)
+                    .UsePropertyAccessMode(PropertyAccessMode.Field);
             });
         }
     }
