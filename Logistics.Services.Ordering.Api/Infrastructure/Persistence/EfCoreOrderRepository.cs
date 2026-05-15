@@ -20,11 +20,12 @@ namespace Logistics.Services.Ordering.Api.Infrastructure.Persistence
 
         public async Task<IReadOnlyCollection<Order>> SearchAsync(OrderQuery orderQuery)
         {
+            //如果 orderQuery 是 null，就立刻抛出 ArgumentNullException。
             ArgumentNullException.ThrowIfNull(orderQuery);
 
             var query = _dbContext.Orders
-                .AsNoTracking()
-                .AsQueryable();
+                .AsNoTracking()//只是用来展示列表，不打算修改它们，所以不用跟踪这些实体的变化。
+                .AsQueryable();//当成一个可以继续拼接条件的查询对象 还没执行查询
 
             if (orderQuery.Status.HasValue)
             {

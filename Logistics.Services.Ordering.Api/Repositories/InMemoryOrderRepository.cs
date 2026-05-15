@@ -3,6 +3,8 @@ using Logistics.Services.Ordering.Api.Domain;
 
 namespace Logistics.Services.Ordering.Api.Repositories
 {
+
+    //内存测试 作废
     public class InMemoryOrderRepository : IOrderRepository
     {
         private readonly Dictionary<Guid, Order> _orders = new();

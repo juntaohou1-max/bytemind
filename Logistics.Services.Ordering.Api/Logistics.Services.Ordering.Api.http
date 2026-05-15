@@ -37,12 +37,91 @@ Accept: application/json
 
 ###
 
-GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/8d330a85-fbd1-421a-91fb-a050c84e8c78
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/5d282980-6edb-43f3-a629-74e12590202c
 Accept: application/json
 
 ###
 
 GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/91a25045-3fa4-44ea-927c-ee495de4e260/timeline
+Accept: application/json
+
+###
+
+@SeedRunTag = 20260515182031
+@SeedCreatedExternalOrderNo = SEED-20260515182031-01
+@SeedCreatedOrderId = 3d66e974-dadc-4797-8fee-e8dffee3d4fe
+@SeedInventoryReservedOrderId = 5786664f-fbb0-4d58-8ac3-e2b6e47c8290
+@SeedFulfillmentCreatedOrderId = 614c7c74-909a-433e-a14c-96c3ce71783d
+@SeedCancelledOrderId = 668064ce-be54-45af-a066-02ae17e12320
+
+### Seed query tests
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?externalOrderNo={{SeedCreatedExternalOrderNo}}
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?status=Created&externalOrderNo={{SeedCreatedExternalOrderNo}}
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?status=Created
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?status=InventoryReserved
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?status=FulfillmentCreated
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?status=Cancelled
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?from=2026-05-15T13:30:00Z&to=2026-05-15T18:10:00Z
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/{{SeedCreatedOrderId}}
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/{{SeedInventoryReservedOrderId}}
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/{{SeedFulfillmentCreatedOrderId}}
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/{{SeedCancelledOrderId}}
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/{{SeedCreatedOrderId}}/timeline
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/{{SeedFulfillmentCreatedOrderId}}/timeline
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/{{SeedCancelledOrderId}}/timeline
 Accept: application/json
 
 ###
