@@ -13,9 +13,9 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             _orderRepository = orderRepository;
         }
 
-        public bool Cancel(Guid id)
+        public async Task<bool> CancelAsync(Guid id)
         {
-            var order = _orderRepository.GetById(id);
+            var order = await _orderRepository.GetByIdAsync(id);
 
             if (order is null)
                 return false;
@@ -25,11 +25,11 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             return true;
         }
 
-        public CreateOrderResponse Create(CreateOrderRequest request)
+        public async Task<CreateOrderResponse> CreateAsync(CreateOrderRequest request)
         {
             var order = OrderContractMapper.ToOrder(request);
 
-            _orderRepository.Add(order);
+            await _orderRepository.AddAsync(order);
 
             return new CreateOrderResponse
             {
@@ -37,13 +37,13 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             };
         }
 
-        public IReadOnlyCollection<OrderListItemResponse> GetAll(
+        public async Task<IReadOnlyCollection<OrderListItemResponse>> GetAllAsync(
             string? status,
             DateTimeOffset? from,
             DateTimeOffset? to,
             string? externalOrderNo)
         {
-            var orders = _orderRepository.GetAll();
+            var orders = await _orderRepository.GetAllAsync();
 
             if (!string.IsNullOrWhiteSpace(status))
             {
@@ -81,9 +81,9 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
                 .ToList();
         }
 
-        public OrderDetailResponse? GetById(Guid id)
+        public async Task<OrderDetailResponse?> GetByIdAsync(Guid id)
         {
-            var order = _orderRepository.GetById(id);
+            var order = await _orderRepository.GetByIdAsync(id);
 
             if (order is null)
                 return null;
@@ -91,9 +91,9 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             return OrderContractMapper.ToDetailResponse(order);
         }
 
-        public IReadOnlyCollection<OrderTimelineItemResponse>? GetTimeline(Guid id)
+        public async Task<IReadOnlyCollection<OrderTimelineItemResponse>?> GetTimelineAsync(Guid id)
         {
-            var order = _orderRepository.GetById(id);
+            var order = await _orderRepository.GetByIdAsync(id);
 
             if (order is null)
                 return null;
@@ -101,9 +101,9 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             return OrderContractMapper.ToTimelineResponse(order);
         }
 
-        public bool MarkFulfillmentCreated(Guid id)
+        public async Task<bool> MarkFulfillmentCreatedAsync(Guid id)
         {
-            var order = _orderRepository.GetById(id);
+            var order = await _orderRepository.GetByIdAsync(id);
 
             if (order is null)
                 return false;
@@ -113,9 +113,9 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             return true;
         }
 
-        public bool MarkInventoryReserved(Guid id)
+        public async Task<bool> MarkInventoryReservedAsync(Guid id)
         {
-            var order = _orderRepository.GetById(id);
+            var order = await _orderRepository.GetByIdAsync(id);
 
             if (order is null)
                 return false;

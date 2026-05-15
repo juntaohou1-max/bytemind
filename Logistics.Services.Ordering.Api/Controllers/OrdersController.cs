@@ -16,7 +16,7 @@ namespace Logistics.Services.Ordering.Api.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(CreateOrderRequest request)
+        public async Task<IActionResult> Create(CreateOrderRequest request)
         {
             if (request.ReceiverAddress is null)
             {
@@ -30,7 +30,7 @@ namespace Logistics.Services.Ordering.Api.Controllers
 
             try
             {
-                var response = _orderApplicationService.Create(request);
+                var response = await _orderApplicationService.CreateAsync(request);
 
                 return Ok(response);
             }
@@ -41,7 +41,7 @@ namespace Logistics.Services.Ordering.Api.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetAll(string? status, DateTimeOffset? from, DateTimeOffset? to, string? externalOrderNo)
+        public async Task<IActionResult> GetAll(string? status, DateTimeOffset? from, DateTimeOffset? to, string? externalOrderNo)
         {
             if (from.HasValue && to.HasValue && from.Value > to.Value)
             {
@@ -50,7 +50,7 @@ namespace Logistics.Services.Ordering.Api.Controllers
 
             try
             {
-                var response = _orderApplicationService.GetAll(status, from, to, externalOrderNo);
+                var response = await _orderApplicationService.GetAllAsync(status, from, to, externalOrderNo);
 
                 return Ok(response);
             }
@@ -61,9 +61,9 @@ namespace Logistics.Services.Ordering.Api.Controllers
         }
 
         [HttpGet("{id:guid}")]
-        public IActionResult GetById(Guid id)
+        public async Task<IActionResult> GetById(Guid id)
         {
-            var response = _orderApplicationService.GetById(id);
+            var response = await _orderApplicationService.GetByIdAsync(id);
 
             if (response is null)
             {
@@ -74,11 +74,11 @@ namespace Logistics.Services.Ordering.Api.Controllers
         }
 
         [HttpPost("{id:guid}/cancel")]
-        public IActionResult Cancel(Guid id)
+        public async Task<IActionResult> Cancel(Guid id)
         {
             try
             {
-                var cancelled = _orderApplicationService.Cancel(id);
+                var cancelled = await _orderApplicationService.CancelAsync(id);
 
                 if (!cancelled)
                 {
@@ -94,9 +94,9 @@ namespace Logistics.Services.Ordering.Api.Controllers
         }
 
         [HttpGet("{id:guid}/timeline")]
-        public IActionResult GetTimeline(Guid id)
+        public async Task<IActionResult> GetTimeline(Guid id)
         {
-            var response = _orderApplicationService.GetTimeline(id);
+            var response = await _orderApplicationService.GetTimelineAsync(id);
 
             if (response is null)
             {
@@ -107,11 +107,11 @@ namespace Logistics.Services.Ordering.Api.Controllers
         }
 
         [HttpPost("{id:guid}/mark-inventory-reserved")]
-        public IActionResult MarkInventoryReserved(Guid id)
+        public async Task<IActionResult> MarkInventoryReserved(Guid id)
         {
             try
             {
-                var marked = _orderApplicationService.MarkInventoryReserved(id);
+                var marked = await _orderApplicationService.MarkInventoryReservedAsync(id);
 
                 if (!marked)
                 {
@@ -127,11 +127,11 @@ namespace Logistics.Services.Ordering.Api.Controllers
         }
 
         [HttpPost("{id:guid}/mark-fulfillment-created")]
-        public IActionResult MarkFulfillmentCreated(Guid id)
+        public async Task<IActionResult> MarkFulfillmentCreated(Guid id)
         {
             try
             {
-                var marked = _orderApplicationService.MarkFulfillmentCreated(id);
+                var marked = await _orderApplicationService.MarkFulfillmentCreatedAsync(id);
 
                 if (!marked)
                 {

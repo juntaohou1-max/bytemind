@@ -8,37 +8,37 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
     public class OrderApplicationServiceTests
     {
         [Fact]
-        public void Create_ShouldSaveOrderAndReturnOrderId()
+        public async Task Create_ShouldSaveOrderAndReturnOrderId()
         {
             var repository = new InMemoryOrderRepository();
             var service = new OrderApplicationService(repository);
 
-            var response = service.Create(CreateRequest("ERP001"));
+            var response = await service.CreateAsync(CreateRequest("ERP001"));
 
-            var savedOrder = repository.GetById(response.Id);
+            var savedOrder = await repository.GetByIdAsync(response.Id);
             Assert.NotNull(savedOrder);
             Assert.Equal("ERP001", savedOrder.ExternalOrderNo);
         }
 
         [Fact]
-        public void GetById_ShouldReturnNull_WhenOrderDoesNotExist()
+        public async Task GetById_ShouldReturnNull_WhenOrderDoesNotExist()
         {
             var service = new OrderApplicationService(new InMemoryOrderRepository());
 
-            var response = service.GetById(Guid.NewGuid());
+            var response = await service.GetByIdAsync(Guid.NewGuid());
 
             Assert.Null(response);
         }
 
         [Fact]
-        public void GetById_ShouldReturnOrderDetail_WhenOrderExists()
+        public async Task GetById_ShouldReturnOrderDetail_WhenOrderExists()
         {
             var repository = new InMemoryOrderRepository();
             var order = CreateOrder("ERP001");
-            repository.Add(order);
+            await repository.AddAsync(order);
             var service = new OrderApplicationService(repository);
 
-            var response = service.GetById(order.Id);
+            var response = await service.GetByIdAsync(order.Id);
 
             Assert.NotNull(response);
             Assert.Equal(order.Id, response.Id);
@@ -47,41 +47,41 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
         }
 
         [Fact]
-        public void Cancel_ShouldReturnFalse_WhenOrderDoesNotExist()
+        public async Task Cancel_ShouldReturnFalse_WhenOrderDoesNotExist()
         {
             var service = new OrderApplicationService(new InMemoryOrderRepository());
 
-            var cancelled = service.Cancel(Guid.NewGuid());
+            var cancelled = await service.CancelAsync(Guid.NewGuid());
 
             Assert.False(cancelled);
         }
 
         [Fact]
-        public void Cancel_ShouldCancelOrder_WhenOrderExists()
+        public async Task Cancel_ShouldCancelOrder_WhenOrderExists()
         {
             var repository = new InMemoryOrderRepository();
             var order = CreateOrder("ERP001");
-            repository.Add(order);
+            await repository.AddAsync(order);
             var service = new OrderApplicationService(repository);
 
-            var cancelled = service.Cancel(order.Id);
+            var cancelled = await service.CancelAsync(order.Id);
 
             Assert.True(cancelled);
             Assert.Equal(OrderStatus.Cancelled, order.Status);
         }
 
         [Fact]
-        public void GetAll_ShouldFilterOrdersByStatus()
+        public async Task GetAll_ShouldFilterOrdersByStatus()
         {
             var repository = new InMemoryOrderRepository();
             var createdOrder = CreateOrder("ERP001");
             var cancelledOrder = CreateOrder("ERP002");
             cancelledOrder.Cancel();
-            repository.Add(createdOrder);
-            repository.Add(cancelledOrder);
+            await repository.AddAsync(createdOrder);
+            await repository.AddAsync(cancelledOrder);
             var service = new OrderApplicationService(repository);
 
-            var response = service.GetAll("Cancelled", null, null, null);
+            var response = await service.GetAllAsync("Cancelled", null, null, null);
 
             var order = Assert.Single(response);
             Assert.Equal(cancelledOrder.Id, order.Id);
@@ -89,15 +89,15 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
         }
 
         [Fact]
-        public void GetAll_ShouldFilterOrdersByExternalOrderNo()
+        public async Task GetAll_ShouldFilterOrdersByExternalOrderNo()
         {
             var repository = new InMemoryOrderRepository();
             var targetOrder = CreateOrder("ERP001");
-            repository.Add(targetOrder);
-            repository.Add(CreateOrder("ERP002"));
+            await repository.AddAsync(targetOrder);
+            await repository.AddAsync(CreateOrder("ERP002"));
             var service = new OrderApplicationService(repository);
 
-            var response = service.GetAll(null, null, null, "ERP001");
+            var response = await service.GetAllAsync(null, null, null, "ERP001");
 
             var order = Assert.Single(response);
             Assert.Equal(targetOrder.Id, order.Id);
@@ -105,13 +105,13 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
         }
 
         [Fact]
-        public void GetAll_ShouldReturnListItemResponse()
+        public async Task GetAll_ShouldReturnListItemResponse()
         {
             var repository = new InMemoryOrderRepository();
-            repository.Add(CreateOrder("ERP001"));
+            await repository.AddAsync(CreateOrder("ERP001"));
             var service = new OrderApplicationService(repository);
 
-            var response = service.GetAll(null, null, null, null);
+            var response = await service.GetAllAsync(null, null, null, null);
 
             var order = Assert.Single(response);
             Assert.Equal("ERP001", order.ExternalOrderNo);
@@ -119,12 +119,12 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
         }
 
         [Fact]
-        public void GetAll_ShouldThrowException_WhenStatusIsInvalid()
+        public async Task GetAll_ShouldThrowException_WhenStatusIsInvalid()
         {
             var service = new OrderApplicationService(new InMemoryOrderRepository());
 
-            var exception = Assert.Throws<ArgumentException>(() =>
-                service.GetAll("Unknown", null, null, null));
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+                service.GetAllAsync("Unknown", null, null, null));
 
             Assert.Equal("status", exception.ParamName);
         }

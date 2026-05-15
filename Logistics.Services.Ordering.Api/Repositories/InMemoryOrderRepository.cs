@@ -7,20 +7,25 @@ namespace Logistics.Services.Ordering.Api.Repositories
     {
         private readonly Dictionary<Guid, Order> _orders = new();
 
-        public void Add(Order order)
+        public Task AddAsync(Order order)
         {
             _orders[order.Id] = order;
+
+            return Task.CompletedTask;
         }
 
-        public IReadOnlyCollection<Order> GetAll()
+        public Task<IReadOnlyCollection<Order>> GetAllAsync()
         {
-            return _orders.Values.ToList();
+            IReadOnlyCollection<Order> orders = _orders.Values.ToList();
+
+            return Task.FromResult(orders);
         }
 
-        public Order? GetById(Guid id)
+        public Task<Order?> GetByIdAsync(Guid id)
         {
             _orders.TryGetValue(id, out var order);
-            return order;
+
+            return Task.FromResult(order);
         }
     }
 }

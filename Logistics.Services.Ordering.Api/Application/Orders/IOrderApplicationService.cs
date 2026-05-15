@@ -4,22 +4,22 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 {
     public interface IOrderApplicationService
     {
-        CreateOrderResponse Create(CreateOrderRequest request);
+        Task<CreateOrderResponse> CreateAsync(CreateOrderRequest request);
 
-        OrderDetailResponse? GetById(Guid id);
+        Task<OrderDetailResponse?> GetByIdAsync(Guid id);
 
-        IReadOnlyCollection<OrderListItemResponse> GetAll(
+        Task<IReadOnlyCollection<OrderListItemResponse>> GetAllAsync(
             string? status,
             DateTimeOffset? from,
             DateTimeOffset? to,
             string? externalOrderNo);
 
-        bool Cancel(Guid id);
+        Task<bool> CancelAsync(Guid id);
 
-        IReadOnlyCollection<OrderTimelineItemResponse>? GetTimeline(Guid id);
+        Task<IReadOnlyCollection<OrderTimelineItemResponse>?> GetTimelineAsync(Guid id);
 
-        bool MarkInventoryReserved(Guid id);
+        Task<bool> MarkInventoryReservedAsync(Guid id);
 
-        bool MarkFulfillmentCreated(Guid id);
+        Task<bool> MarkFulfillmentCreatedAsync(Guid id);
     }
 }
