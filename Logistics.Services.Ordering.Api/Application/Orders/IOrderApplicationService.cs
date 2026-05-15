@@ -17,5 +17,9 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
         bool Cancel(Guid id);
 
         IReadOnlyCollection<OrderTimelineItemResponse>? GetTimeline(Guid id);
+
+        bool MarkInventoryReserved(Guid id);
+
+        bool MarkFulfillmentCreated(Guid id);
     }
 }

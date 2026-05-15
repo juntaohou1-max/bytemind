@@ -4,7 +4,7 @@ namespace Logistics.Services.Ordering.Api.Domain
     /// 订单状态。
     /// </summary>
     /// <remarks>
-    /// 第一阶段只表达接单相关的基础状态。
+    /// 第一阶段只表达接单和早期履约相关的基础状态。
     /// 后续加入库存、拣货、出库、运输后，可以继续扩展更细的履约状态。
     /// </remarks>
     public enum OrderStatus

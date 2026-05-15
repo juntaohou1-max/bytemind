@@ -101,12 +101,43 @@ namespace Logistics.Services.Ordering.Api.Domain
         }
 
         /// <summary>
+        /// 标记订单库存已锁定。
+        /// </summary>
+        /// <exception cref="InvalidOperationException">当前状态不允许标记库存已锁定时抛出。</exception>
+        public void MarkInventoryReserved()
+        {
+            if (Status != OrderStatus.Created)
+            {
+                throw new InvalidOperationException("只有已创建的订单才能标记为库存已锁定。");
+            }
+
+            Status = OrderStatus.InventoryReserved;
+            AddTimelineItem("InventoryReserved", "库存已锁定");
+        }
+
+        /// <summary>
+        /// 标记订单履约单已创建。
+        /// </summary>
+        /// <exception cref="InvalidOperationException">当前状态不允许标记履约单已创建时抛出。</exception>
+        public void MarkFulfillmentCreated()
+        {
+            if (Status != OrderStatus.InventoryReserved)
+            {
+                throw new InvalidOperationException("只有库存已锁定的订单才能标记为履约单已创建。");
+            }
+
+            Status = OrderStatus.FulfillmentCreated;
+            AddTimelineItem("FulfillmentCreated", "履约单已创建");
+        }
+
+        /// <summary>
         /// 取消订单。
         /// </summary>
         /// <remarks>
-        /// 第一阶段还没有发货状态，所以这里只处理最基础的取消。
-        /// 后续加入履约状态后，再补充“已经发货的订单不能直接取消”的业务规则。
+        /// 当前第一版允许已创建、库存已锁定的订单取消。
+        /// 履约单已创建后不能直接取消，后续需要走履约拦截或退货流程。
         /// </remarks>
+        /// <exception cref="InvalidOperationException">当前状态不允许直接取消时抛出。</exception>
         public void Cancel()
         {
             if (Status == OrderStatus.Cancelled)
@@ -161,28 +192,6 @@ namespace Logistics.Services.Ordering.Api.Domain
             }
 
             return value.Trim();
-        }
-
-        public void MarkInventoryReserved()
-        {
-            if (Status != OrderStatus.Created)
-            {
-                throw new InvalidOperationException("只有已创建的订单才能标记为库存已锁定。");
-            }
-
-            Status = OrderStatus.InventoryReserved;
-            AddTimelineItem("InventoryReserved", "库存已锁定");
-        }
-
-        public void MarkFulfillmentCreated()
-        {
-            if (Status != OrderStatus.InventoryReserved)
-            {
-                throw new InvalidOperationException("只有库存已锁定的订单才能标记为履约单已创建。");
-            }
-
-            Status = OrderStatus.FulfillmentCreated;
-            AddTimelineItem("FulfillmentCreated", "履约单已创建");
         }
     }
 }

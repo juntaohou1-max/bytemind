@@ -100,5 +100,29 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 
             return OrderContractMapper.ToTimelineResponse(order);
         }
+
+        public bool MarkFulfillmentCreated(Guid id)
+        {
+            var order = _orderRepository.GetById(id);
+
+            if (order is null)
+                return false;
+
+            order.MarkFulfillmentCreated();
+
+            return true;
+        }
+
+        public bool MarkInventoryReserved(Guid id)
+        {
+            var order = _orderRepository.GetById(id);
+
+            if (order is null)
+                return false;
+
+            order.MarkInventoryReserved();
+
+            return true;
+        }
     }
 }

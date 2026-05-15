@@ -76,14 +76,21 @@ namespace Logistics.Services.Ordering.Api.Controllers
         [HttpPost("{id:guid}/cancel")]
         public IActionResult Cancel(Guid id)
         {
-            var cancelled = _orderApplicationService.Cancel(id);
-
-            if (!cancelled)
+            try
             {
-                return NotFound();
-            }
+                var cancelled = _orderApplicationService.Cancel(id);
 
-            return NoContent();
+                if (!cancelled)
+                {
+                    return NotFound();
+                }
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
 
         [HttpGet("{id:guid}/timeline")]
@@ -97,6 +104,46 @@ namespace Logistics.Services.Ordering.Api.Controllers
             }
 
             return Ok(response);
+        }
+
+        [HttpPost("{id:guid}/reserve-inventory")]
+        public IActionResult MarkInventoryReserved(Guid id)
+        {
+            try
+            {
+                var marked = _orderApplicationService.MarkInventoryReserved(id);
+
+                if (!marked)
+                {
+                    return NotFound();
+                }
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+        }
+
+        [HttpPost("{id:guid}/fulfillment-created")]
+        public IActionResult MarkFulfillmentCreated(Guid id)
+        {
+            try
+            {
+                var marked = _orderApplicationService.MarkFulfillmentCreated(id);
+
+                if (!marked)
+                {
+                    return NotFound();
+                }
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
     }
 }

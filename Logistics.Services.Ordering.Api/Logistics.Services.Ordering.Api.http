@@ -1,4 +1,4 @@
-@Logistics.Services.Ordering.Api_HostAddress = http://localhost:5299
+ï»¿@Logistics.Services.Ordering.Api_HostAddress = http://localhost:5299
 
 ###
 
@@ -10,12 +10,12 @@ Content-Type: application/json
   "customerId": "customer-001",
   "externalOrderNo": "ERP202605120001",
   "receiverAddress": {
-    "receiverName": "ÕÅÈı",
+    "receiverName": "å¼ ä¸‰",
     "phone": "13800000000",
-    "province": "Õã½­Ê¡",
-    "city": "º¼ÖİÊĞ",
-    "district": "Î÷ºşÇø",
-    "detail": "ÎÄÈıÂ· 100 ºÅ"
+    "province": "æµ™æ±Ÿçœ",
+    "city": "æ­å·å¸‚",
+    "district": "è¥¿æ¹–åŒº",
+    "detail": "æ–‡ä¸‰è·¯ 100 å·"
   },
   "lines": [
     {
@@ -72,5 +72,28 @@ GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?status=Created&fr
 Accept: application/json
 
 ###
+
 GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?from=2026-05-15T00:00:00Z&to=2026-05-14T00:00:00Z
 Accept: application/json
+
+###
+
+POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/91a25045-3fa4-44ea-927c-ee495de4e260/reserve-inventory
+Accept: application/json
+
+###
+
+POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/91a25045-3fa4-44ea-927c-ee495de4e260/fulfillment-created
+Accept: application/json
+
+###
+
+POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/91a25045-3fa4-44ea-927c-ee495de4e260/cancel
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/91a25045-3fa4-44ea-927c-ee495de4e260/timeline
+Accept: application/json
+
+###
