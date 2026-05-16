@@ -126,6 +126,75 @@ Accept: application/json
 
 ###
 
+@IdempotentExternalOrderNo = IDEMPOTENT-202605160001
+
+### Idempotent create tests
+
+POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders
+Content-Type: application/json
+
+{
+  "tenantId": "tenant-001",
+  "customerId": "customer-idempotent-001",
+  "externalOrderNo": "{{IdempotentExternalOrderNo}}",
+  "receiverAddress": {
+    "receiverName": "幂等测试收货人",
+    "phone": "13800001111",
+    "province": "浙江省",
+    "city": "杭州市",
+    "district": "西湖区",
+    "detail": "幂等测试路 1 号"
+  },
+  "lines": [
+    {
+      "skuId": "SKU-IDEMPOTENT-001",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
+POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders
+Content-Type: application/json
+
+{
+  "tenantId": "tenant-001",
+  "customerId": "customer-idempotent-001",
+  "externalOrderNo": "{{IdempotentExternalOrderNo}}",
+  "receiverAddress": {
+    "receiverName": "幂等测试收货人",
+    "phone": "13800001111",
+    "province": "浙江省",
+    "city": "杭州市",
+    "district": "西湖区",
+    "detail": "幂等测试路 1 号"
+  },
+  "lines": [
+    {
+      "skuId": "SKU-IDEMPOTENT-001",
+      "quantity": 1
+    }
+  ]
+}
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?externalOrderNo={{IdempotentExternalOrderNo}}&pageNumber=1&pageSize=20&sort=createdAtDesc
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?pageNumber=1&pageSize=5&sort=createdAtDesc
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?pageNumber=2&pageSize=5&sort=createdAtAsc
+Accept: application/json
+
+###
+
 
 GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders?status=Created
 Accept: application/json

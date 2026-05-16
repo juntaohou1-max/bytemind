@@ -1,6 +1,8 @@
 ﻿using Logistics.Services.Ordering.Api.Contracts.Orders;
 using Logistics.Services.Ordering.Api.Domain;
 using Logistics.Services.Ordering.Api.Repositories;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace Logistics.Services.Ordering.Api.Application.Orders
 {
@@ -41,8 +43,26 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 
             var order = OrderContractMapper.ToOrder(request);
 
-            await _orderRepository.AddAsync(order);
-            await _orderRepository.SaveChangesAsync();
+            try
+            {
+                await _orderRepository.AddAsync(order);
+                await _orderRepository.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex) when (IsUniqueIndexConflict(ex))
+            {
+                var savedOrder = await _orderRepository.GetByTenantAndExternalOrderNoAsync(
+                    request.TenantId!,
+                    request.ExternalOrderNo!);
+
+                if (savedOrder is not null)
+                {
+                    return new CreateOrderResponse
+                    {
+                        Id = savedOrder.Id
+                    };
+                }
+                throw;
+            }
 
             return new CreateOrderResponse
             {
@@ -153,5 +173,13 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 
             return true;
         }
+
+        private static bool IsUniqueIndexConflict(DbUpdateException exception)
+        {
+            return exception.InnerException?.Message.Contains(
+                "IX_Orders_TenantId_ExternalOrderNo",
+                StringComparison.OrdinalIgnoreCase) == true;
+        }
+
     }
 }
