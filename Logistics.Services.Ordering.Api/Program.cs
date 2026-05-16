@@ -11,6 +11,8 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IOrderRepository, EfCoreOrderRepository>();
 builder.Services.AddScoped<IOrderApplicationService, OrderApplicationService>();
 builder.Services.AddScoped<IOutboxMessageRepository, EfCoreOutboxMessageRepository>();
+// 注册 Outbox 后台发布器，应用启动后自动扫描并处理 Pending 消息。
+builder.Services.AddHostedService<OutboxMessagePublisher>();
 builder.Services.AddDbContext<OrderingDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("OrderingDb"));

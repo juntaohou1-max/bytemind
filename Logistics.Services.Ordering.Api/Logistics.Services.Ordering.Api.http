@@ -237,7 +237,7 @@ Accept: application/json
 
 ###
 
-POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/91a25045-3fa4-44ea-927c-ee495de4e260/cancel
+POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders/4E8440A3-30EC-4BC1-A4A5-0D79006E5862/cancel
 Accept: application/json
 
 ###

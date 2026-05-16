@@ -240,6 +240,25 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
 
                 return Task.CompletedTask;
             }
+
+            public Task<IReadOnlyCollection<OutboxMessage>> GetMessagesByStatusAsync(
+                OutboxStatus status,
+                int take,
+                CancellationToken cancellationToken = default)
+            {
+                IReadOnlyCollection<OutboxMessage> messages = _messages
+                    .Where(message => message.Status == status)
+                    .OrderBy(message => message.OccurredAt)
+                    .Take(take)
+                    .ToList();
+
+                return Task.FromResult(messages);
+            }
+
+            public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+            {
+                return Task.CompletedTask;
+            }
         }
 
         private static void AssertOrderOutboxMessage(
