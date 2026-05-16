@@ -92,6 +92,49 @@ namespace Logistics.Services.Ordering.Tests.Domain
             Assert.Throws<InvalidOperationException>(() => message.MarkFailed());
         }
 
+        [Fact]
+        public void CanRetry_ShouldReturnTrue_WhenFailedRetryCountIsLessThanMaxRetryCount()
+        {
+            var message = CreateMessage();
+
+            message.MarkFailed();
+
+            Assert.True(message.CanRetry(3));
+        }
+
+        [Fact]
+        public void CanRetry_ShouldReturnFalse_WhenRetryLimitIsReached()
+        {
+            var message = CreateMessage();
+
+            message.MarkFailed();
+            message.MarkFailed();
+            message.MarkFailed();
+
+            Assert.False(message.CanRetry(3));
+        }
+
+        [Fact]
+        public void MarkPendingForRetry_ShouldChangeFailedMessageToPending()
+        {
+            var message = CreateMessage();
+
+            message.MarkFailed();
+            message.MarkPendingForRetry();
+
+            Assert.Equal(OutboxStatus.Pending, message.Status);
+            Assert.Equal(1, message.RetryCount);
+            Assert.Null(message.ProcessedAt);
+        }
+
+        [Fact]
+        public void MarkPendingForRetry_ShouldThrowException_WhenMessageIsNotFailed()
+        {
+            var message = CreateMessage();
+
+            Assert.Throws<InvalidOperationException>(() => message.MarkPendingForRetry());
+        }
+
         private static OutboxMessage CreateMessage()
         {
             return new OutboxMessage(

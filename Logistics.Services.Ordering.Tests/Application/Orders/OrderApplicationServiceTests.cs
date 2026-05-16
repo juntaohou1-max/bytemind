@@ -255,6 +255,22 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
                 return Task.FromResult(messages);
             }
 
+            public Task<IReadOnlyCollection<OutboxMessage>> GetFailedMessagesForRetryAsync(
+                int maxRetryCount,
+                int take,
+                CancellationToken cancellationToken = default)
+            {
+                IReadOnlyCollection<OutboxMessage> messages = _messages
+                    .Where(message =>
+                        message.Status == OutboxStatus.Failed &&
+                        message.RetryCount < maxRetryCount)
+                    .OrderBy(message => message.OccurredAt)
+                    .Take(take)
+                    .ToList();
+
+                return Task.FromResult(messages);
+            }
+
             public Task SaveChangesAsync(CancellationToken cancellationToken = default)
             {
                 return Task.CompletedTask;

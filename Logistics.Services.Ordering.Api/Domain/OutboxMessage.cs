@@ -116,6 +116,34 @@ namespace Logistics.Services.Ordering.Api.Domain
             RetryCount++;
         }
 
+        /// <summary>
+        /// 判断失败消息是否还能继续重试。
+        /// </summary>
+        /// <param name="maxRetryCount">最多允许失败重试次数。</param>
+        public bool CanRetry(int maxRetryCount)
+        {
+            if (maxRetryCount < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxRetryCount), "最大重试次数不能小于 0。");
+            }
+
+            return Status == OutboxStatus.Failed && RetryCount < maxRetryCount;
+        }
+
+        /// <summary>
+        /// 将失败消息重新放回待发布队列。
+        /// </summary>
+        public void MarkPendingForRetry()
+        {
+            if (Status != OutboxStatus.Failed)
+            {
+                throw new InvalidOperationException("只有发布失败的 Outbox 消息才能重新进入待发布状态。");
+            }
+
+            Status = OutboxStatus.Pending;
+            ProcessedAt = null;
+        }
+
         private static string EnsureRequired(string value, string parameterName)
         {
             if (string.IsNullOrWhiteSpace(value))

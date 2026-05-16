@@ -41,6 +41,31 @@ namespace Logistics.Services.Ordering.Api.Infrastructure.Persistence
                 .ToListAsync(cancellationToken);
         }
 
+        public async Task<IReadOnlyCollection<OutboxMessage>> GetFailedMessagesForRetryAsync(
+            int maxRetryCount,
+            int take,
+            CancellationToken cancellationToken = default)
+        {
+            if (maxRetryCount < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxRetryCount), "最大重试次数不能小于 0。");
+            }
+
+            if (take < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(take), "查询数量必须大于 0。");
+            }
+
+            // 只取还没达到重试上限的 Failed 消息，避免反复扫描已经需要人工处理的数据。
+            return await _dbContext.OutboxMessages
+                .Where(message =>
+                    message.Status == OutboxStatus.Failed &&
+                    message.RetryCount < maxRetryCount)
+                .OrderBy(message => message.OccurredAt)
+                .Take(take)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             // 发布器修改消息状态后，统一通过这里落库。

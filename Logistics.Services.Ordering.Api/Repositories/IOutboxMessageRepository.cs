@@ -26,6 +26,18 @@ namespace Logistics.Services.Ordering.Api.Repositories
             CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// 查询还没有超过最大重试次数的失败消息。
+        /// </summary>
+        /// <param name="maxRetryCount">最大失败重试次数。</param>
+        /// <param name="take">本次最多取多少条。</param>
+        /// <param name="cancellationToken">取消令牌。</param>
+        /// <returns>可以重新放回待发布队列的失败消息集合。</returns>
+        Task<IReadOnlyCollection<OutboxMessage>> GetFailedMessagesForRetryAsync(
+            int maxRetryCount,
+            int take,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// 保存 Outbox 消息状态变更。
         /// </summary>
         /// <param name="cancellationToken">取消令牌。</param>
