@@ -91,13 +91,13 @@ namespace Logistics.Services.Ordering.Api.Contracts.Orders
         /// <param name="pageSize">每页数据条数。</param>
         /// <param name="totalCount">符合查询条件的总条数。</param>
         /// <returns>分页响应。</returns>
-        public static PagedResponse<T> ToPagedResponse<T>(
+        public static Logistics.Services.Ordering.Api.Contracts.PagedResponse<T> ToPagedResponse<T>(
             IReadOnlyCollection<T> items,
             int pageNumber,
             int pageSize,
             int totalCount)
         {
-            return new PagedResponse<T>
+            return new Logistics.Services.Ordering.Api.Contracts.PagedResponse<T>
             {
                 Items = items,
                 PageNumber = pageNumber,

@@ -47,6 +47,52 @@ Accept: application/json
 
 ###
 
+### Outbox message query tests
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/outbox-messages?pageNumber=1&pageSize=20&sort=occurredAtDesc
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/outbox-messages?status=Pending&pageNumber=1&pageSize=20
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/outbox-messages?status=Published&pageNumber=1&pageSize=20
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/outbox-messages?status=Failed&pageNumber=1&pageSize=20
+Accept: application/json
+
+###
+
+@OutboxMessageId = 00000000-0000-0000-0000-000000000000
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/outbox-messages/{{OutboxMessageId}}
+Accept: application/json
+
+###
+
+POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/outbox-messages/{{OutboxMessageId}}/retry
+Accept: application/json
+
+###
+
+POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/outbox-messages/retry-failed?take=20
+Accept: application/json
+
+###
+
+GET {{Logistics.Services.Ordering.Api_HostAddress}}/api/outbox-messages?status=Unknown
+Accept: application/json
+
+###
+
 @SeedRunTag = 20260515182031
 @SeedCreatedExternalOrderNo = SEED-20260515182031-01
 @SeedCreatedOrderId = 3d66e974-dadc-4797-8fee-e8dffee3d4fe

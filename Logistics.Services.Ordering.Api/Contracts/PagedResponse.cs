@@ -1,33 +1,33 @@
-namespace Logistics.Services.Ordering.Api.Contracts.Orders
+namespace Logistics.Services.Ordering.Api.Contracts
 {
     /// <summary>
-    /// 分页接口的统一响应结构。
+    /// Common response shape for paged list endpoints.
     /// </summary>
-    /// <typeparam name="T">当前页中单条数据的响应类型。</typeparam>
+    /// <typeparam name="T">Single item response type.</typeparam>
     public class PagedResponse<T>
     {
         /// <summary>
-        /// 当前页的数据集合。
+        /// Items in the current page.
         /// </summary>
         public IReadOnlyCollection<T> Items { get; init; } = [];
 
         /// <summary>
-        /// 当前页码，从 1 开始。
+        /// Current page number, starting from 1.
         /// </summary>
         public int PageNumber { get; init; }
 
         /// <summary>
-        /// 每页数据条数。
+        /// Number of items requested for each page.
         /// </summary>
         public int PageSize { get; init; }
 
         /// <summary>
-        /// 符合查询条件的总数据条数。
+        /// Total item count matching the query.
         /// </summary>
         public int TotalCount { get; init; }
 
         /// <summary>
-        /// 根据总条数和每页条数计算出的总页数。
+        /// Total page count calculated from TotalCount and PageSize.
         /// </summary>
         public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
     }

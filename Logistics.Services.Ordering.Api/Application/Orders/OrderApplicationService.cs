@@ -94,7 +94,7 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             };
         }
 
-        public async Task<PagedResponse<OrderListItemResponse>> GetAllAsync(
+        public async Task<Logistics.Services.Ordering.Api.Contracts.PagedResponse<OrderListItemResponse>> GetAllAsync(
             string? status,
             DateTimeOffset? from,
             DateTimeOffset? to,

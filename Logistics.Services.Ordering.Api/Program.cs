@@ -1,5 +1,6 @@
 using Logistics.Services.Ordering.Api.Application.IntegrationEvents;
 using Logistics.Services.Ordering.Api.Application.Orders;
+using Logistics.Services.Ordering.Api.Application.OutboxMessages;
 using Logistics.Services.Ordering.Api.Infrastructure.IntegrationEvents;
 using Logistics.Services.Ordering.Api.Infrastructure.Outbox;
 using Logistics.Services.Ordering.Api.Infrastructure.Persistence;
@@ -14,6 +15,8 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IOrderRepository, EfCoreOrderRepository>();
 builder.Services.AddScoped<IOrderApplicationService, OrderApplicationService>();
 builder.Services.AddScoped<IOutboxMessageRepository, EfCoreOutboxMessageRepository>();
+builder.Services.AddScoped<IOutboxMessageQueryService, EfCoreOutboxMessageQueryService>();
+builder.Services.AddScoped<IOutboxMessageOperationService, EfCoreOutboxMessageOperationService>();
 builder.Services.AddSingleton<IIntegrationEventPublisher, LoggingIntegrationEventPublisher>();
 // 注册 Outbox 后台发布器，应用启动后自动扫描并处理 Pending 消息。
 builder.Services.AddHostedService<OutboxMessagePublisher>();

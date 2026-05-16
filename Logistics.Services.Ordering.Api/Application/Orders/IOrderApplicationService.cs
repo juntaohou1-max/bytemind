@@ -29,7 +29,7 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
         /// <param name="pageSize">每页数据条数。</param>
         /// <param name="sort">排序方式，当前支持 createdAtDesc 和 createdAtAsc。</param>
         /// <returns>分页后的订单列表响应。</returns>
-        Task<PagedResponse<OrderListItemResponse>> GetAllAsync(
+        Task<Logistics.Services.Ordering.Api.Contracts.PagedResponse<OrderListItemResponse>> GetAllAsync(
             string? status,
             DateTimeOffset? from,
             DateTimeOffset? to,
