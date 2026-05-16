@@ -21,7 +21,7 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             Assert.Equal("ERP001", savedOrder.ExternalOrderNo);
 
             var outboxMessage = Assert.Single(outboxRepository.Messages);
-            AssertOrderOutboxMessage(outboxMessage, "OrderCreated", savedOrder);
+            AssertOrderOutboxMessage(outboxMessage, "OrderCreatedIntegrationEvent", savedOrder);
         }
 
         [Fact]
@@ -91,7 +91,11 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             Assert.Equal(OrderStatus.Cancelled, order.Status);
 
             var outboxMessage = Assert.Single(outboxRepository.Messages);
-            AssertOrderOutboxMessage(outboxMessage, "OrderCancelled", order);
+            AssertOrderOutboxMessage(
+                outboxMessage,
+                "OrderCancelledIntegrationEvent",
+                order,
+                order.Status.ToString());
         }
 
         [Fact]
@@ -109,7 +113,11 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             Assert.Equal(OrderStatus.InventoryReserved, order.Status);
 
             var outboxMessage = Assert.Single(outboxRepository.Messages);
-            AssertOrderOutboxMessage(outboxMessage, "InventoryReserved", order);
+            AssertOrderOutboxMessage(
+                outboxMessage,
+                "InventoryReservedIntegrationEvent",
+                order,
+                order.Status.ToString());
         }
 
         [Fact]
@@ -128,7 +136,11 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             Assert.Equal(OrderStatus.FulfillmentCreated, order.Status);
 
             var outboxMessage = Assert.Single(outboxRepository.Messages);
-            AssertOrderOutboxMessage(outboxMessage, "FulfillmentCreated", order);
+            AssertOrderOutboxMessage(
+                outboxMessage,
+                "FulfillmentCreatedIntegrationEvent",
+                order,
+                order.Status.ToString());
         }
 
         [Fact]
@@ -280,14 +292,20 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
         private static void AssertOrderOutboxMessage(
             OutboxMessage outboxMessage,
             string expectedEventType,
-            Order order)
+            Order order,
+            string? expectedStatus = null)
         {
             Assert.Equal(expectedEventType, outboxMessage.EventType);
             Assert.Equal(OutboxStatus.Pending, outboxMessage.Status);
             Assert.Contains(order.Id.ToString(), outboxMessage.Payload);
             Assert.Contains(order.TenantId, outboxMessage.Payload);
             Assert.Contains(order.ExternalOrderNo, outboxMessage.Payload);
-            Assert.Contains(order.Status.ToString(), outboxMessage.Payload);
+            Assert.Contains(expectedEventType, outboxMessage.Payload);
+
+            if (expectedStatus is not null)
+            {
+                Assert.Contains(expectedStatus, outboxMessage.Payload);
+            }
         }
 
         private static Order CreateOrder(string externalOrderNo)

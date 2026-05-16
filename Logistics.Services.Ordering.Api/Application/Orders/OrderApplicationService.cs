@@ -1,5 +1,6 @@
 ﻿using Logistics.Services.Ordering.Api.Contracts.Orders;
 using Logistics.Services.Ordering.Api.Domain;
+using Logistics.Services.Ordering.Api.IntegrationEvents;
 using Logistics.Services.Ordering.Api.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -9,15 +10,21 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 {
     public class OrderApplicationService : IOrderApplicationService
     {
-        private const string OrderCreatedEventType = "OrderCreated";
-        private const string InventoryReservedEventType = "InventoryReserved";
-        private const string FulfillmentCreatedEventType = "FulfillmentCreated";
-        private const string OrderCancelledEventType = "OrderCancelled";
+        private const string OrderCreatedEventType = "OrderCreatedIntegrationEvent";
+        private const string InventoryReservedEventType = "InventoryReservedIntegrationEvent";
+        private const string FulfillmentCreatedEventType = "FulfillmentCreatedIntegrationEvent";
+        private const string OrderCancelledEventType = "OrderCancelledIntegrationEvent";
+
+        private static readonly JsonSerializerOptions IntegrationEventJsonOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
 
         private readonly IOrderRepository _orderRepository;
         private readonly IOutboxMessageRepository _outboxMessageRepository;
 
-        public OrderApplicationService(IOrderRepository orderRepository, IOutboxMessageRepository outboxMessageRepository)
+        public OrderApplicationService(IOrderRepository orderRepository, 
+            IOutboxMessageRepository outboxMessageRepository)
         {
             _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
             //构造函数参数不能为空，如果传进来是 null，就立刻抛异常。
@@ -196,20 +203,61 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
         private async Task AddOrderOutboxMessageAsync(Order order, string eventType)
         {
             var occurredAt = DateTimeOffset.UtcNow;
+            var integrationEvent = CreateIntegrationEvent(order, eventType, occurredAt);
 
-            var payload = JsonSerializer.Serialize(new
-            {
-                OrderId = order.Id,
-                order.TenantId,
-                order.ExternalOrderNo,
-                Status = order.Status.ToString(),
-                OccurredAt = occurredAt
-            });
+            var payload = JsonSerializer.Serialize(
+                integrationEvent,
+                integrationEvent.GetType(),
+                IntegrationEventJsonOptions);
 
             await _outboxMessageRepository.AddAsync(new OutboxMessage(
-                eventType,
+                integrationEvent.EventType,
                 payload,
-                occurredAt));
+                integrationEvent.OccurredAt));
+        }
+
+        private static IntegrationEvent CreateIntegrationEvent(
+            Order order,
+            string eventType,
+            DateTimeOffset occurredAt)
+        {
+            return eventType switch
+            {
+                OrderCreatedEventType => new OrderCreatedIntegrationEvent(
+                    order.TenantId,
+                    order.Id.ToString(),
+                    occurredAt,
+                    order.ExternalOrderNo,
+                    order.CustomerId,
+                    order.Lines
+                        .Select(line => new OrderCreatedIntegrationEventLine(
+                            line.SkuId,
+                            line.Quantity))
+                        .ToList()),
+
+                OrderCancelledEventType => new OrderCancelledIntegrationEvent(
+                    order.TenantId,
+                    order.Id.ToString(),
+                    occurredAt,
+                    order.ExternalOrderNo,
+                    order.Status.ToString()),
+
+                InventoryReservedEventType => new InventoryReservedIntegrationEvent(
+                    order.TenantId,
+                    order.Id.ToString(),
+                    occurredAt,
+                    order.ExternalOrderNo,
+                    order.Status.ToString()),
+
+                FulfillmentCreatedEventType => new FulfillmentCreatedIntegrationEvent(
+                    order.TenantId,
+                    order.Id.ToString(),
+                    occurredAt,
+                    order.ExternalOrderNo,
+                    order.Status.ToString()),
+
+                _ => throw new ArgumentException("不支持的集成事件类型。", nameof(eventType))
+            };
         }
 
         private static bool IsUniqueIndexConflict(DbUpdateException exception)
