@@ -9,6 +9,9 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 {
     public class OrderApplicationService : IOrderApplicationService
     {
+        private const string OrderCreatedEventType = "OrderCreated";
+        private const string InventoryReservedEventType = "InventoryReserved";
+        private const string FulfillmentCreatedEventType = "FulfillmentCreated";
         private const string OrderCancelledEventType = "OrderCancelled";
 
         private readonly IOrderRepository _orderRepository;
@@ -34,21 +37,7 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 
             if (order.Status != originalStatus)
             {
-                var occurredAt = DateTimeOffset.UtcNow;
-
-                var payload = JsonSerializer.Serialize(new
-                {
-                    OrderId = order.Id,
-                    order.TenantId,
-                    order.ExternalOrderNo,
-                    Status = order.Status.ToString(),
-                    OccurredAt = occurredAt
-                });
-
-                await _outboxMessageRepository.AddAsync(new OutboxMessage(
-                    OrderCancelledEventType,
-                    payload,
-                    occurredAt));
+                await AddOrderOutboxMessageAsync(order, OrderCancelledEventType);
             }
 
             await _orderRepository.SaveChangesAsync();
@@ -73,6 +62,7 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             try
             {
                 await _orderRepository.AddAsync(order);
+                await AddOrderOutboxMessageAsync(order, OrderCreatedEventType);
                 await _orderRepository.SaveChangesAsync();
             }
             catch (DbUpdateException ex) when (IsUniqueIndexConflict(ex))
@@ -182,6 +172,7 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 
             order.MarkFulfillmentCreated();
 
+            await AddOrderOutboxMessageAsync(order, FulfillmentCreatedEventType);
             await _orderRepository.SaveChangesAsync();
 
             return true;
@@ -196,9 +187,29 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
 
             order.MarkInventoryReserved();
 
+            await AddOrderOutboxMessageAsync(order, InventoryReservedEventType);
             await _orderRepository.SaveChangesAsync();
 
             return true;
+        }
+
+        private async Task AddOrderOutboxMessageAsync(Order order, string eventType)
+        {
+            var occurredAt = DateTimeOffset.UtcNow;
+
+            var payload = JsonSerializer.Serialize(new
+            {
+                OrderId = order.Id,
+                order.TenantId,
+                order.ExternalOrderNo,
+                Status = order.Status.ToString(),
+                OccurredAt = occurredAt
+            });
+
+            await _outboxMessageRepository.AddAsync(new OutboxMessage(
+                eventType,
+                payload,
+                occurredAt));
         }
 
         private static bool IsUniqueIndexConflict(DbUpdateException exception)

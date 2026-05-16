@@ -11,13 +11,31 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
         public async Task Create_ShouldSaveOrderAndReturnOrderId()
         {
             var repository = new InMemoryOrderRepository();
-            var service = CreateService(repository);
+            var outboxRepository = new TestOutboxMessageRepository();
+            var service = CreateService(repository, outboxRepository);
 
             var response = await service.CreateAsync(CreateRequest("ERP001"));
 
             var savedOrder = await repository.GetByIdAsync(response.Id);
             Assert.NotNull(savedOrder);
             Assert.Equal("ERP001", savedOrder.ExternalOrderNo);
+
+            var outboxMessage = Assert.Single(outboxRepository.Messages);
+            AssertOrderOutboxMessage(outboxMessage, "OrderCreated", savedOrder);
+        }
+
+        [Fact]
+        public async Task Create_ShouldReturnExistingOrderAndNotAddOutboxMessage_WhenOrderAlreadyExists()
+        {
+            var repository = new InMemoryOrderRepository();
+            var outboxRepository = new TestOutboxMessageRepository();
+            var service = CreateService(repository, outboxRepository);
+
+            var firstResponse = await service.CreateAsync(CreateRequest("ERP001"));
+            var secondResponse = await service.CreateAsync(CreateRequest("ERP001"));
+
+            Assert.Equal(firstResponse.Id, secondResponse.Id);
+            Assert.Single(outboxRepository.Messages);
         }
 
         [Fact]
@@ -73,11 +91,44 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             Assert.Equal(OrderStatus.Cancelled, order.Status);
 
             var outboxMessage = Assert.Single(outboxRepository.Messages);
-            Assert.Equal("OrderCancelled", outboxMessage.EventType);
-            Assert.Equal(OutboxStatus.Pending, outboxMessage.Status);
-            Assert.Contains(order.Id.ToString(), outboxMessage.Payload);
-            Assert.Contains(order.TenantId, outboxMessage.Payload);
-            Assert.Contains(order.ExternalOrderNo, outboxMessage.Payload);
+            AssertOrderOutboxMessage(outboxMessage, "OrderCancelled", order);
+        }
+
+        [Fact]
+        public async Task MarkInventoryReserved_ShouldAddOutboxMessage_WhenOrderExists()
+        {
+            var repository = new InMemoryOrderRepository();
+            var order = CreateOrder("ERP001");
+            await repository.AddAsync(order);
+            var outboxRepository = new TestOutboxMessageRepository();
+            var service = CreateService(repository, outboxRepository);
+
+            var marked = await service.MarkInventoryReservedAsync(order.Id);
+
+            Assert.True(marked);
+            Assert.Equal(OrderStatus.InventoryReserved, order.Status);
+
+            var outboxMessage = Assert.Single(outboxRepository.Messages);
+            AssertOrderOutboxMessage(outboxMessage, "InventoryReserved", order);
+        }
+
+        [Fact]
+        public async Task MarkFulfillmentCreated_ShouldAddOutboxMessage_WhenOrderExists()
+        {
+            var repository = new InMemoryOrderRepository();
+            var order = CreateOrder("ERP001");
+            order.MarkInventoryReserved();
+            await repository.AddAsync(order);
+            var outboxRepository = new TestOutboxMessageRepository();
+            var service = CreateService(repository, outboxRepository);
+
+            var marked = await service.MarkFulfillmentCreatedAsync(order.Id);
+
+            Assert.True(marked);
+            Assert.Equal(OrderStatus.FulfillmentCreated, order.Status);
+
+            var outboxMessage = Assert.Single(outboxRepository.Messages);
+            AssertOrderOutboxMessage(outboxMessage, "FulfillmentCreated", order);
         }
 
         [Fact]
@@ -189,6 +240,19 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
 
                 return Task.CompletedTask;
             }
+        }
+
+        private static void AssertOrderOutboxMessage(
+            OutboxMessage outboxMessage,
+            string expectedEventType,
+            Order order)
+        {
+            Assert.Equal(expectedEventType, outboxMessage.EventType);
+            Assert.Equal(OutboxStatus.Pending, outboxMessage.Status);
+            Assert.Contains(order.Id.ToString(), outboxMessage.Payload);
+            Assert.Contains(order.TenantId, outboxMessage.Payload);
+            Assert.Contains(order.ExternalOrderNo, outboxMessage.Payload);
+            Assert.Contains(order.Status.ToString(), outboxMessage.Payload);
         }
 
         private static Order CreateOrder(string externalOrderNo)
