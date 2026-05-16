@@ -11,7 +11,7 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
         public async Task Create_ShouldSaveOrderAndReturnOrderId()
         {
             var repository = new InMemoryOrderRepository();
-            var service = new OrderApplicationService(repository);
+            var service = CreateService(repository);
 
             var response = await service.CreateAsync(CreateRequest("ERP001"));
 
@@ -23,7 +23,7 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
         [Fact]
         public async Task GetById_ShouldReturnNull_WhenOrderDoesNotExist()
         {
-            var service = new OrderApplicationService(new InMemoryOrderRepository());
+            var service = CreateService(new InMemoryOrderRepository());
 
             var response = await service.GetByIdAsync(Guid.NewGuid());
 
@@ -36,7 +36,7 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             var repository = new InMemoryOrderRepository();
             var order = CreateOrder("ERP001");
             await repository.AddAsync(order);
-            var service = new OrderApplicationService(repository);
+            var service = CreateService(repository);
 
             var response = await service.GetByIdAsync(order.Id);
 
@@ -49,11 +49,13 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
         [Fact]
         public async Task Cancel_ShouldReturnFalse_WhenOrderDoesNotExist()
         {
-            var service = new OrderApplicationService(new InMemoryOrderRepository());
+            var outboxRepository = new TestOutboxMessageRepository();
+            var service = CreateService(new InMemoryOrderRepository(), outboxRepository);
 
             var cancelled = await service.CancelAsync(Guid.NewGuid());
 
             Assert.False(cancelled);
+            Assert.Empty(outboxRepository.Messages);
         }
 
         [Fact]
@@ -62,12 +64,20 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             var repository = new InMemoryOrderRepository();
             var order = CreateOrder("ERP001");
             await repository.AddAsync(order);
-            var service = new OrderApplicationService(repository);
+            var outboxRepository = new TestOutboxMessageRepository();
+            var service = CreateService(repository, outboxRepository);
 
             var cancelled = await service.CancelAsync(order.Id);
 
             Assert.True(cancelled);
             Assert.Equal(OrderStatus.Cancelled, order.Status);
+
+            var outboxMessage = Assert.Single(outboxRepository.Messages);
+            Assert.Equal("OrderCancelled", outboxMessage.EventType);
+            Assert.Equal(OutboxStatus.Pending, outboxMessage.Status);
+            Assert.Contains(order.Id.ToString(), outboxMessage.Payload);
+            Assert.Contains(order.TenantId, outboxMessage.Payload);
+            Assert.Contains(order.ExternalOrderNo, outboxMessage.Payload);
         }
 
         [Fact]
@@ -79,7 +89,7 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             cancelledOrder.Cancel();
             await repository.AddAsync(createdOrder);
             await repository.AddAsync(cancelledOrder);
-            var service = new OrderApplicationService(repository);
+            var service = CreateService(repository);
 
             var response = await service.GetAllAsync("Cancelled", null, null, null, 1, 20, "createdAtDesc");
 
@@ -96,7 +106,7 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             var targetOrder = CreateOrder("ERP001");
             await repository.AddAsync(targetOrder);
             await repository.AddAsync(CreateOrder("ERP002"));
-            var service = new OrderApplicationService(repository);
+            var service = CreateService(repository);
 
             var response = await service.GetAllAsync(null, null, null, "ERP001", 1, 20, "createdAtDesc");
 
@@ -111,7 +121,7 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
         {
             var repository = new InMemoryOrderRepository();
             await repository.AddAsync(CreateOrder("ERP001"));
-            var service = new OrderApplicationService(repository);
+            var service = CreateService(repository);
 
             var response = await service.GetAllAsync(null, null, null, null, 1, 20, "createdAtDesc");
 
@@ -126,7 +136,7 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
         [Fact]
         public async Task GetAll_ShouldThrowException_WhenStatusIsInvalid()
         {
-            var service = new OrderApplicationService(new InMemoryOrderRepository());
+            var service = CreateService(new InMemoryOrderRepository());
 
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
                 service.GetAllAsync("Unknown", null, null, null, 1, 20, "createdAtDesc"));
@@ -146,7 +156,7 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             await repository.AddAsync(firstOrder);
             await repository.AddAsync(secondOrder);
             await repository.AddAsync(thirdOrder);
-            var service = new OrderApplicationService(repository);
+            var service = CreateService(repository);
 
             var response = await service.GetAllAsync(null, null, null, null, 2, 1, "createdAtAsc");
 
@@ -156,6 +166,29 @@ namespace Logistics.Services.Ordering.Tests.Application.Orders
             Assert.Equal(1, response.PageSize);
             Assert.Equal(3, response.TotalCount);
             Assert.Equal(3, response.TotalPages);
+        }
+
+        private static OrderApplicationService CreateService(
+            IOrderRepository orderRepository,
+            IOutboxMessageRepository? outboxMessageRepository = null)
+        {
+            return new OrderApplicationService(
+                orderRepository,
+                outboxMessageRepository ?? new TestOutboxMessageRepository());
+        }
+
+        private sealed class TestOutboxMessageRepository : IOutboxMessageRepository
+        {
+            private readonly List<OutboxMessage> _messages = [];
+
+            public IReadOnlyCollection<OutboxMessage> Messages => _messages.AsReadOnly();
+
+            public Task AddAsync(OutboxMessage outboxMessage)
+            {
+                _messages.Add(outboxMessage);
+
+                return Task.CompletedTask;
+            }
         }
 
         private static Order CreateOrder(string externalOrderNo)

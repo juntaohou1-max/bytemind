@@ -134,7 +134,7 @@ POST {{Logistics.Services.Ordering.Api_HostAddress}}/api/orders
 Content-Type: application/json
 
 {
-  "tenantId": "tenant-001",
+  "tenantId": "tenant-002",
   "customerId": "customer-idempotent-001",
   "externalOrderNo": "{{IdempotentExternalOrderNo}}",
   "receiverAddress": {

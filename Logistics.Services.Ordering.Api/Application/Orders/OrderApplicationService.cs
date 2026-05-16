@@ -2,17 +2,23 @@
 using Logistics.Services.Ordering.Api.Domain;
 using Logistics.Services.Ordering.Api.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 
 namespace Logistics.Services.Ordering.Api.Application.Orders
 {
     public class OrderApplicationService : IOrderApplicationService
     {
-        private readonly IOrderRepository _orderRepository;
+        private const string OrderCancelledEventType = "OrderCancelled";
 
-        public OrderApplicationService(IOrderRepository orderRepository)
+        private readonly IOrderRepository _orderRepository;
+        private readonly IOutboxMessageRepository _outboxMessageRepository;
+
+        public OrderApplicationService(IOrderRepository orderRepository, IOutboxMessageRepository outboxMessageRepository)
         {
-            _orderRepository = orderRepository;
+            _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
+            //构造函数参数不能为空，如果传进来是 null，就立刻抛异常。
+            _outboxMessageRepository = outboxMessageRepository ?? throw new ArgumentNullException(nameof(outboxMessageRepository));
         }
 
         public async Task<bool> CancelAsync(Guid id)
@@ -22,7 +28,28 @@ namespace Logistics.Services.Ordering.Api.Application.Orders
             if (order is null)
                 return false;
 
+            var originalStatus = order.Status;
+
             order.Cancel();
+
+            if (order.Status != originalStatus)
+            {
+                var occurredAt = DateTimeOffset.UtcNow;
+
+                var payload = JsonSerializer.Serialize(new
+                {
+                    OrderId = order.Id,
+                    order.TenantId,
+                    order.ExternalOrderNo,
+                    Status = order.Status.ToString(),
+                    OccurredAt = occurredAt
+                });
+
+                await _outboxMessageRepository.AddAsync(new OutboxMessage(
+                    OrderCancelledEventType,
+                    payload,
+                    occurredAt));
+            }
 
             await _orderRepository.SaveChangesAsync();
 

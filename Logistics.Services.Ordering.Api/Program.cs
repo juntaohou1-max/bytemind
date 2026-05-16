@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddScoped<IOrderRepository, EfCoreOrderRepository>();
 builder.Services.AddScoped<IOrderApplicationService, OrderApplicationService>();
+builder.Services.AddScoped<IOutboxMessageRepository, EfCoreOutboxMessageRepository>();
 builder.Services.AddDbContext<OrderingDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("OrderingDb"));
