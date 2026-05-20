@@ -1,5 +1,4 @@
 using System;
-
 namespace Logistics.Services.Inventory.Api.Domain
 {
     /// <summary>
