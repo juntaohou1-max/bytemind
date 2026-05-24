@@ -1,3 +1,4 @@
+using Logistics.Services.Inventory.Api.Application.Inventory;
 using Logistics.Services.Inventory.Api.Infrastructure.Persistence;
 using Logistics.Services.Inventory.Api.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,8 @@ builder.Services.AddDbContext<InventoryDbContext>(options =>
 });
 // 注册库存总账仓储，后续应用服务通过接口操作库存聚合。
 builder.Services.AddScoped<IInventoryItemRepository, EfCoreInventoryItemRepository>();
+// 注册 Inventory 应用服务，后续 Controller 通过它调用库存业务用例。
+builder.Services.AddScoped<IInventoryApplicationService, InventoryApplicationService>();
 
 var app = builder.Build();
 
