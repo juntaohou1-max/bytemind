@@ -24,9 +24,13 @@ namespace Logistics.Services.Inventory.Api.Application.Inventory
         /// <param name="skuId">SKU 标识。</param>
         /// <param name="cancellationToken">取消令牌。</param>
         /// <returns>找到则返回库存总账结果，找不到则返回 null。</returns>
-        public Task<InventoryItemResult?> GetBySkuIdAsync(string skuId, CancellationToken cancellationToken = default)
+        public async Task<InventoryItemResult?> GetBySkuIdAsync(string skuId, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException("请补充查询库存总账逻辑：调用仓储按 SKU 查询，并把领域对象映射为 InventoryItemResult。");
+            EnsureSkuId(skuId);
+
+            var item = await _inventoryItemRepository.GetBySkuIdAsync(skuId, cancellationToken);
+
+            return item?.ToResult();
         }
 
         /// <summary>
@@ -35,9 +39,20 @@ namespace Logistics.Services.Inventory.Api.Application.Inventory
         /// <param name="command">调整库存命令。</param>
         /// <param name="cancellationToken">取消令牌。</param>
         /// <returns>调整后的库存总账结果。</returns>
-        public Task<InventoryItemResult> AdjustInventoryAsync(AdjustInventoryCommand command, CancellationToken cancellationToken = default)
+        /// <exception cref="KeyNotFoundException">当指定 SKU 的库存总账不存在时抛出。</exception>
+        public async Task<InventoryItemResult> AdjustInventoryAsync(AdjustInventoryCommand command, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException("请补充调整库存逻辑：查找或创建库存总账，调用 Adjust，保存变更，并返回 InventoryItemResult。");
+            ArgumentNullException.ThrowIfNull(command);
+            EnsureSkuId(command.SkuId);
+
+            var item = await _inventoryItemRepository.GetBySkuIdAsync(command.SkuId, cancellationToken)
+                ?? throw new KeyNotFoundException($"SKU '{command.SkuId}' 的库存总账不存在，无法调整。");
+
+            item.Adjust(command.QuantityDelta, command.ReferenceNo);
+
+            await _inventoryItemRepository.SaveChangesAsync(cancellationToken);
+
+            return item.ToResult();
         }
 
         /// <summary>
@@ -46,9 +61,20 @@ namespace Logistics.Services.Inventory.Api.Application.Inventory
         /// <param name="command">锁定库存命令。</param>
         /// <param name="cancellationToken">取消令牌。</param>
         /// <returns>库存预留结果。</returns>
-        public Task<InventoryReservationResult> ReserveInventoryAsync(ReserveInventoryCommand command, CancellationToken cancellationToken = default)
+        /// <exception cref="KeyNotFoundException">当指定 SKU 的库存总账不存在时抛出。</exception>
+        public async Task<InventoryReservationResult> ReserveInventoryAsync(ReserveInventoryCommand command, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException("请补充锁定库存逻辑：按 SKU 查询库存总账，调用 Reserve，保存变更，并返回 InventoryReservationResult。");
+            ArgumentNullException.ThrowIfNull(command);
+            EnsureSkuId(command.SkuId);
+
+            var item = await _inventoryItemRepository.GetBySkuIdAsync(command.SkuId, cancellationToken)
+                ?? throw new KeyNotFoundException($"SKU '{command.SkuId}' 的库存总账不存在，无法锁定。");
+
+            var reservation = item.Reserve(command.ExternalOrderNo, command.Quantity);
+
+            await _inventoryItemRepository.SaveChangesAsync(cancellationToken);
+
+            return reservation.ToResult();
         }
 
         /// <summary>
@@ -56,9 +82,15 @@ namespace Logistics.Services.Inventory.Api.Application.Inventory
         /// </summary>
         /// <param name="reservationId">库存预留 ID。</param>
         /// <param name="cancellationToken">取消令牌。</param>
-        public Task ReleaseReservationAsync(Guid reservationId, CancellationToken cancellationToken = default)
+        /// <exception cref="KeyNotFoundException">当预留 ID 对应的库存总账不存在时抛出。</exception>
+        public async Task ReleaseReservationAsync(Guid reservationId, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException("请补充释放库存预留逻辑：按预留 ID 查询库存总账，调用 ReleaseReservation，并保存变更。");
+            var item = await _inventoryItemRepository.GetByReservationIdAsync(reservationId, cancellationToken)
+                ?? throw new KeyNotFoundException($"未找到预留 ID '{reservationId}' 对应的库存总账。");
+
+            item.ReleaseReservation(reservationId);
+
+            await _inventoryItemRepository.SaveChangesAsync(cancellationToken);
         }
 
         /// <summary>
@@ -66,9 +98,28 @@ namespace Logistics.Services.Inventory.Api.Application.Inventory
         /// </summary>
         /// <param name="reservationId">库存预留 ID。</param>
         /// <param name="cancellationToken">取消令牌。</param>
-        public Task DeductReservationAsync(Guid reservationId, CancellationToken cancellationToken = default)
+        /// <exception cref="KeyNotFoundException">当预留 ID 对应的库存总账不存在时抛出。</exception>
+        public async Task DeductReservationAsync(Guid reservationId, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException("请补充扣减库存预留逻辑：按预留 ID 查询库存总账，调用 DeductReservation，并保存变更。");
+            var item = await _inventoryItemRepository.GetByReservationIdAsync(reservationId, cancellationToken)
+                ?? throw new KeyNotFoundException($"未找到预留 ID '{reservationId}' 对应的库存总账。");
+
+            item.DeductReservation(reservationId);
+
+            await _inventoryItemRepository.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// 校验 SKU 标识不能为空。
+        /// </summary>
+        /// <param name="skuId">SKU 标识。</param>
+        /// <exception cref="ArgumentException">当 SKU 标识为空或纯空白时抛出。</exception>
+        private static void EnsureSkuId(string? skuId)
+        {
+            if (string.IsNullOrWhiteSpace(skuId))
+            {
+                throw new ArgumentException("SKU 标识不能为空。", nameof(skuId));
+            }
         }
     }
 }
