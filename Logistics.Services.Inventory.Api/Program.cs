@@ -19,6 +19,7 @@ builder.Services.AddScoped<IInventoryItemRepository, EfCoreInventoryItemReposito
 // 注册 Inventory 应用服务，后续 Controller 通过它调用库存业务用例。
 builder.Services.AddScoped<IInventoryApplicationService, InventoryApplicationService>();
 
+
 var app = builder.Build();
 
 // 开发环境下启用 OpenAPI 文档。
