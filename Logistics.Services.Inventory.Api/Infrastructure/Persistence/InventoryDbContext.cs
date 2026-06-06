@@ -1,4 +1,6 @@
 ﻿using Logistics.Services.Inventory.Api.Domain;
+using Logistics.Services.Inventory.Api.Domain.Inbox;
+using Logistics.Services.Inventory.Api.Domain.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -30,6 +32,16 @@ namespace Logistics.Services.Inventory.Api.Infrastructure.Persistence
         /// </summary>
         public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
 
+        /// <summary>
+        /// Inbox 消息集合，用于记录已处理的集成事件，实现幂等消费。
+        /// </summary>
+        public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
+
+        /// <summary>
+        /// Outbox 消息集合，用于保存待发布的集成事件，后续由后台任务负责发送。
+        /// </summary>
+        public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
 
         /// <summary>
         /// 配置 Inventory 模块领域模型到数据库表的映射。
@@ -40,6 +52,8 @@ namespace Logistics.Services.Inventory.Api.Infrastructure.Persistence
             ConfigureInventoryItem(modelBuilder.Entity<InventoryItem>());
             ConfigureInventoryReservation(modelBuilder.Entity<InventoryReservation>());
             ConfigureInventoryTransaction(modelBuilder.Entity<InventoryTransaction>());
+            ConfigureInboxMessage(modelBuilder.Entity<InboxMessage>());
+            ConfigureOutboxMessage(modelBuilder.Entity<OutboxMessage>());
         }
 
 
@@ -165,6 +179,79 @@ namespace Logistics.Services.Inventory.Api.Infrastructure.Persistence
             builder.HasIndex(transaction => transaction.SkuId);
 
             builder.HasIndex(transaction => transaction.ReservationId);
+        }
+
+        /// <summary>
+        /// 配置 Inbox 消息表映射。
+        /// </summary>
+        /// <param name="builder">Inbox 消息实体配置器。</param>
+        private static void ConfigureInboxMessage(EntityTypeBuilder<InboxMessage> builder)
+        {
+            builder.ToTable("InboxMessages");
+
+            builder.HasKey(inboxMessage => inboxMessage.Id);
+            builder.Property(inboxMessage => inboxMessage.Id)
+                .ValueGeneratedNever();
+
+            builder.Property(inboxMessage => inboxMessage.EventId)
+                .IsRequired();
+
+            // 给 EventId 建唯一索引，从数据库层面保证同一集成事件不会被重复处理。
+            builder.HasIndex(inboxMessage => inboxMessage.EventId)
+                .IsUnique();
+
+            builder.Property(inboxMessage => inboxMessage.EventType)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            builder.Property(inboxMessage => inboxMessage.TenantId)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            builder.Property(inboxMessage => inboxMessage.Payload)
+                .HasColumnType("nvarchar(max)")
+                .IsRequired();
+
+            builder.Property(inboxMessage => inboxMessage.ProcessedAt)
+                .IsRequired();
+        }
+
+        /// <summary>
+        /// 配置 Outbox 消息表映射。
+        /// </summary>
+        /// <param name="builder">Outbox 消息实体配置器。</param>
+        private static void ConfigureOutboxMessage(EntityTypeBuilder<OutboxMessage> builder)
+        {
+            builder.ToTable("OutboxMessages");
+
+            builder.HasKey(message => message.Id);
+
+            builder.Property(message => message.EventType)
+                .IsRequired()
+                .HasMaxLength(128);
+
+            builder.Property(message => message.Payload)
+                .IsRequired();
+
+            builder.Property(message => message.Status)
+                .IsRequired()
+                .HasConversion<string>()
+                .HasMaxLength(32);
+
+            builder.Property(message => message.OccurredAt)
+                .IsRequired();
+
+            builder.Property(message => message.ProcessedAt);
+
+            builder.Property(message => message.RetryCount)
+                .IsRequired();
+
+            // 后台发布器按状态筛选，并优先处理更早产生的消息。
+            builder.HasIndex(message => new
+            {
+                message.Status,
+                message.OccurredAt
+            });
         }
     }
 }
