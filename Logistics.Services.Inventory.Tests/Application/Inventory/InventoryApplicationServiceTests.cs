@@ -97,19 +97,25 @@ namespace Logistics.Services.Inventory.Tests.Application.Inventory
         }
 
         /// <summary>
-        /// 调整库存时，SKU 不存在应该抛出未找到异常。
+        /// 调整库存时，SKU 不存在应该创建库存总账并保存变更。
         /// </summary>
         [Fact]
-        public async Task AdjustInventoryAsync_ShouldThrowException_WhenSkuDoesNotExist()
+        public async Task AdjustInventoryAsync_ShouldCreateInventoryItemAndSaveChanges_WhenSkuDoesNotExist()
         {
             var repository = new FakeInventoryItemRepository();
             var service = new InventoryApplicationService(repository);
             var command = new AdjustInventoryCommand("SKU-404", 10, "INITIAL-STOCK");
 
-            await Assert.ThrowsAsync<KeyNotFoundException>(() =>
-                service.AdjustInventoryAsync(command));
+            var result = await service.AdjustInventoryAsync(command);
 
-            Assert.Equal(0, repository.SaveChangesCount);
+            Assert.Equal("SKU-404", result.SkuId);
+            Assert.Equal(10, result.OnHandQuantity);
+            Assert.Equal(10, result.AvailableQuantity);
+            Assert.Equal(1, repository.SaveChangesCount);
+
+            var createdItem = await repository.GetBySkuIdAsync("SKU-404");
+            Assert.NotNull(createdItem);
+            Assert.Equal(10, createdItem.OnHandQuantity);
         }
 
         /// <summary>

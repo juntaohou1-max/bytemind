@@ -29,14 +29,21 @@ namespace Logistics.Services.Inventory.Api.Controllers
         [HttpGet("skus/{skuId}")]
         public async Task<ActionResult<InventoryItemResponse>> GetBySkuId(string skuId)
         {
-            var item = await _inventoryApplicationService.GetBySkuIdAsync(skuId);
-
-            if (item is null)
+            try
             {
-                return NotFound();
-            }
+                var item = await _inventoryApplicationService.GetBySkuIdAsync(skuId);
 
-            return Ok(InventoryItemResponse.FromResult(item));
+                if (item is null)
+                {
+                    return NotFound(CreateProblemDetails("库存总账不存在", $"SKU '{skuId}' 的库存总账不存在。"));
+                }
+
+                return Ok(InventoryItemResponse.FromResult(item));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(CreateProblemDetails("请求参数无效", exception.Message));
+            }
         }
 
         /// <summary>
@@ -44,16 +51,147 @@ namespace Logistics.Services.Inventory.Api.Controllers
         /// </summary>
         /// <param name="request">调整库存请求。</param>
         [HttpPost("adjustments")]
-        public async Task<ActionResult<InventoryItemResponse>> AdjustInventory([FromBody] AdjustInventoryRequest request)
+        public async Task<ActionResult<InventoryItemResponse>> AdjustInventory([FromBody] AdjustInventoryRequest? request)
         {
-            var command = new AdjustInventoryCommand(
-                request.SkuId,
-                request.QuantityDelta,
-                request.ReferenceNo);
+            if (request is null)
+            {
+                return BadRequest(CreateProblemDetails("请求参数无效", "请求体不能为空。"));
+            }
 
-            var item = await _inventoryApplicationService.AdjustInventoryAsync(command);
+            try
+            {
+                var command = new AdjustInventoryCommand(
+                    request.SkuId,
+                    request.QuantityDelta,
+                    request.ReferenceNo);
 
-            return Ok(InventoryItemResponse.FromResult(item));
+                var item = await _inventoryApplicationService.AdjustInventoryAsync(command);
+
+                return Ok(InventoryItemResponse.FromResult(item));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(CreateProblemDetails("请求参数无效", exception.Message));
+            }
+            catch (InvalidOperationException exception)
+            {
+                return BadRequest(CreateProblemDetails("库存调整失败", exception.Message));
+            }
+        }
+
+        /// <summary>
+        /// 锁定库存。
+        /// </summary>
+        /// <param name="request">锁定库存请求。</param>
+        [HttpPost("reservations")]
+        public async Task<ActionResult<InventoryReservationResponse>> ReserveInventory([FromBody] ReserveInventoryRequest? request)
+        {
+            if (request is null)
+            {
+                return BadRequest(CreateProblemDetails("请求参数无效", "请求体不能为空。"));
+            }
+
+            try
+            {
+                var command = new ReserveInventoryCommand(
+                    request.SkuId,
+                    request.ExternalOrderNo,
+                    request.Quantity);
+
+                var reservation = await _inventoryApplicationService.ReserveInventoryAsync(command);
+
+                return Ok(InventoryReservationResponse.FromResult(reservation));
+            }
+            catch (KeyNotFoundException exception)
+            {
+                return NotFound(CreateProblemDetails("库存总账不存在", exception.Message));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(CreateProblemDetails("请求参数无效", exception.Message));
+            }
+            catch (InvalidOperationException exception)
+            {
+                return BadRequest(CreateProblemDetails("库存锁定失败", exception.Message));
+            }
+        }
+
+        /// <summary>
+        /// 释放库存预留。
+        /// </summary>
+        /// <param name="reservationId">库存预留 ID。</param>
+        [HttpPost("reservations/{reservationId}/release")]
+        public async Task<ActionResult> ReleaseReservation([FromRoute] Guid reservationId)
+        {
+            if (reservationId == Guid.Empty)
+            {
+                return BadRequest(CreateProblemDetails("请求参数无效", "库存预留 ID 不能为空。"));
+            }
+
+            try
+            {
+                await _inventoryApplicationService.ReleaseReservationAsync(reservationId);
+
+                return NoContent();
+            }
+            catch (KeyNotFoundException exception)
+            {
+                return NotFound(CreateProblemDetails("库存预留不存在", exception.Message));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(CreateProblemDetails("请求参数无效", exception.Message));
+            }
+            catch (InvalidOperationException exception)
+            {
+                return BadRequest(CreateProblemDetails("库存预留释放失败", exception.Message));
+            }
+        }
+
+        /// <summary>
+        /// 扣减库存预留。
+        /// </summary>
+        /// <param name="reservationId">库存预留 ID。</param>
+        [HttpPost("reservations/{reservationId}/deduct")]
+        public async Task<ActionResult> DeductReservation([FromRoute] Guid reservationId)
+        {
+            if (reservationId == Guid.Empty)
+            {
+                return BadRequest(CreateProblemDetails("请求参数无效", "库存预留 ID 不能为空。"));
+            }
+
+            try
+            {
+                await _inventoryApplicationService.DeductReservationAsync(reservationId);
+
+                return NoContent();
+            }
+            catch (KeyNotFoundException exception)
+            {
+                return NotFound(CreateProblemDetails("库存预留不存在", exception.Message));
+            }
+            catch (ArgumentException exception)
+            {
+                return BadRequest(CreateProblemDetails("请求参数无效", exception.Message));
+            }
+            catch (InvalidOperationException exception)
+            {
+                return BadRequest(CreateProblemDetails("库存预留扣减失败", exception.Message));
+            }
+        }
+
+        /// <summary>
+        /// 创建接口错误响应内容。
+        /// </summary>
+        /// <param name="title">错误标题。</param>
+        /// <param name="detail">错误详情。</param>
+        private static ProblemDetails CreateProblemDetails(string title, string detail)
+        {
+            return new ProblemDetails
+            {
+                Title = title,
+                Detail = detail
+            };
         }
     }
 }

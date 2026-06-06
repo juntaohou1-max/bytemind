@@ -52,6 +52,9 @@ namespace Logistics.Services.Inventory.Api.Infrastructure.Persistence
             builder.ToTable("InventoryItems");
 
             builder.HasKey(item => item.Id);
+            builder.Property(item => item.Id)
+                .ValueGeneratedNever();
+
             builder.Property(item => item.SkuId)
                  .HasMaxLength(100)
                 .IsRequired();
@@ -96,6 +99,8 @@ namespace Logistics.Services.Inventory.Api.Infrastructure.Persistence
             builder.ToTable("InventoryReservations");
 
             builder.HasKey(reservation => reservation.Id);
+            builder.Property(reservation => reservation.Id)
+                .ValueGeneratedNever();
 
             builder.Property<Guid>("InventoryItemId")
                 .IsRequired();
@@ -131,6 +136,8 @@ namespace Logistics.Services.Inventory.Api.Infrastructure.Persistence
             builder.ToTable("InventoryTransactions");
 
             builder.HasKey(transaction => transaction.Id);
+            builder.Property(transaction => transaction.Id)
+                .ValueGeneratedNever();
 
             builder.Property<Guid>("InventoryItemId")
                 .IsRequired();

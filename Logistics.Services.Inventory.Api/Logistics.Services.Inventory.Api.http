@@ -1,0 +1,71 @@
+@Logistics.Services.Inventory.Api_HostAddress = http://localhost:51005
+@SkuId = SKU-HTTP-001
+@ExternalOrderNo = ERP-HTTP-001
+@ReleaseReservationId = replace-with-release-reservation-id
+@DeductReservationId = replace-with-deduct-reservation-id
+@MissingReservationId = 00000000-0000-0000-0000-000000000001
+
+### 查询 SKU 库存总账
+GET {{Logistics.Services.Inventory.Api_HostAddress}}/api/inventory/skus/{{SkuId}}
+
+### 调整库存
+POST {{Logistics.Services.Inventory.Api_HostAddress}}/api/inventory/adjustments
+Content-Type: application/json
+
+{
+  "skuId": "{{SkuId}}",
+  "quantityDelta": 100,
+  "referenceNo": "INITIAL-STOCK"
+}
+
+### 锁定库存
+POST {{Logistics.Services.Inventory.Api_HostAddress}}/api/inventory/reservations
+Content-Type: application/json
+
+{
+  "skuId": "{{SkuId}}",
+  "externalOrderNo": "{{ExternalOrderNo}}",
+  "quantity": 30
+}
+
+### 释放库存预留
+POST {{Logistics.Services.Inventory.Api_HostAddress}}/api/inventory/reservations/{{ReleaseReservationId}}/release
+
+### 扣减库存预留
+POST {{Logistics.Services.Inventory.Api_HostAddress}}/api/inventory/reservations/{{DeductReservationId}}/deduct
+
+### 失败场景：SKU 为空，应该返回 400
+POST {{Logistics.Services.Inventory.Api_HostAddress}}/api/inventory/adjustments
+Content-Type: application/json
+
+{
+  "skuId": " ",
+  "quantityDelta": 10,
+  "referenceNo": "BAD-SKU"
+}
+
+### 失败场景：调整数量为 0，应该返回 400
+POST {{Logistics.Services.Inventory.Api_HostAddress}}/api/inventory/adjustments
+Content-Type: application/json
+
+{
+  "skuId": "{{SkuId}}",
+  "quantityDelta": 0,
+  "referenceNo": "ZERO-DELTA"
+}
+
+### 失败场景：锁定数量超过可用库存，应该返回 400
+POST {{Logistics.Services.Inventory.Api_HostAddress}}/api/inventory/reservations
+Content-Type: application/json
+
+{
+  "skuId": "{{SkuId}}",
+  "externalOrderNo": "ERP-HTTP-NOT-ENOUGH",
+  "quantity": 999999
+}
+
+### 失败场景：库存预留不存在，释放应该返回 404
+POST {{Logistics.Services.Inventory.Api_HostAddress}}/api/inventory/reservations/{{MissingReservationId}}/release
+
+### 失败场景：库存预留 ID 为空，扣减应该返回 400
+POST {{Logistics.Services.Inventory.Api_HostAddress}}/api/inventory/reservations/00000000-0000-0000-0000-000000000000/deduct
